@@ -2,13 +2,18 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>🌿 Plant Care Assistant</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         :root {
@@ -22,28 +27,34 @@
             --text-secondary: #666;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #ffffff;
-            color: var(--text);
-            overflow-x: hidden;
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
         }
 
-        /* Layout */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #ffffff;
+            color: var(--text);
+        }
+
         .app {
-            max-width: 480px;
-            margin: 0 auto;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
             background: #ffffff;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
 
         .screen {
             display: none;
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
             padding-bottom: 80px;
         }
 
@@ -55,6 +66,8 @@
         .screen-content {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
             padding: 16px;
         }
 
@@ -65,6 +78,8 @@
             padding: 12px 16px;
             border-bottom: 1px solid var(--border);
             background: #fff;
+            z-index: 10;
+            flex-shrink: 0;
         }
 
         .header-title {
@@ -84,9 +99,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
         }
 
-        .btn-back:hover {
+        .btn-back:active {
             background: var(--light);
             border-radius: 50%;
         }
@@ -95,7 +113,7 @@
             width: 44px;
         }
 
-        /* Home Screen */
+        /* HOME */
         .home-hero {
             text-align: center;
             padding: 20px 0;
@@ -152,12 +170,13 @@
             font-weight: 600;
             width: 100%;
             transition: all 0.3s;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
-        .main-button:hover {
+        .main-button:active {
             background: #2ba5e0;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(77, 184, 255, 0.3);
+            transform: scale(0.98);
         }
 
         .main-button-icon {
@@ -180,7 +199,6 @@
             opacity: 0.9;
         }
 
-        /* Buttons */
         .btn {
             background: var(--primary);
             border: none;
@@ -193,12 +211,13 @@
             transition: all 0.3s;
             width: 100%;
             margin-bottom: 12px;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
-        .btn:hover {
+        .btn:active {
             background: #2ba5e0;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transform: scale(0.98);
         }
 
         .btn-secondary {
@@ -207,7 +226,7 @@
             color: var(--primary);
         }
 
-        .btn-secondary:hover {
+        .btn-secondary:active {
             background: var(--light);
         }
 
@@ -215,7 +234,7 @@
             background: var(--danger);
         }
 
-        .btn-danger:hover {
+        .btn-danger:active {
             background: #d32f2f;
         }
 
@@ -225,7 +244,119 @@
             margin-bottom: 8px;
         }
 
-        /* Section */
+        /* CAMERA */
+        .camera-screen {
+            background: #000 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+
+        .camera-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+        }
+
+        .camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .camera-guide {
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            border: 3px solid var(--primary);
+            border-radius: 16px;
+            background: rgba(77, 184, 255, 0.05);
+            pointer-events: none;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+        }
+
+        .camera-text {
+            position: absolute;
+            bottom: 120px;
+            color: white;
+            text-align: center;
+            font-size: 14px;
+            left: 0;
+            right: 0;
+            pointer-events: none;
+        }
+
+        .camera-controls {
+            position: absolute;
+            bottom: 80px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 12px;
+            padding: 0 24px;
+            z-index: 20;
+        }
+
+        .camera-button {
+            width: 56px;
+            height: 56px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            cursor: pointer;
+            font-size: 28px;
+            transition: all 0.3s;
+            -webkit-user-select: none;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .camera-button:active {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0.95);
+        }
+
+        .camera-capture {
+            width: 72px;
+            height: 72px;
+            border-radius: 36px;
+            background: var(--primary);
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            -webkit-user-select: none;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .camera-capture:active {
+            transform: scale(0.90);
+            background: #2ba5e0;
+        }
+
+        .camera-capture-inner {
+            width: 56px;
+            height: 56px;
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.3);
+            margin: 8px;
+        }
+
+        canvas {
+            display: none;
+        }
+
         .section {
             margin-bottom: 24px;
         }
@@ -236,21 +367,6 @@
             margin-bottom: 12px;
         }
 
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .see-all {
-            font-size: 12px;
-            color: var(--primary);
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        /* Cards */
         .plant-card {
             background: white;
             border-radius: 12px;
@@ -260,11 +376,12 @@
             display: flex;
             cursor: pointer;
             transition: all 0.3s;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
-        .plant-card:hover {
+        .plant-card:active {
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
         }
 
         .plant-card-image {
@@ -292,15 +409,8 @@
             font-size: 12px;
             color: var(--text-secondary);
             font-style: italic;
-            margin-bottom: 4px;
         }
 
-        .plant-date {
-            font-size: 11px;
-            color: #999;
-        }
-
-        /* Alert Card */
         .alert-card {
             background: white;
             border-radius: 12px;
@@ -312,9 +422,11 @@
             align-items: center;
             cursor: pointer;
             transition: all 0.3s;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
-        .alert-card:hover {
+        .alert-card:active {
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
@@ -342,18 +454,6 @@
             margin-bottom: 4px;
         }
 
-        .alert-date {
-            font-size: 12px;
-            color: #999;
-        }
-
-        .alert-arrow {
-            font-size: 20px;
-            color: #ccc;
-            margin-left: 12px;
-        }
-
-        /* Stats */
         .stats {
             display: flex;
             gap: 12px;
@@ -381,7 +481,6 @@
             font-weight: 500;
         }
 
-        /* Quick Access */
         .quick-access {
             display: flex;
             gap: 12px;
@@ -397,9 +496,11 @@
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
-        .quick-button:hover {
+        .quick-button:active {
             background: white;
             border-color: var(--primary);
         }
@@ -415,7 +516,6 @@
             color: var(--text);
         }
 
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -436,75 +536,6 @@
             font-size: 14px;
             color: var(--text-secondary);
             margin-bottom: 24px;
-        }
-
-        /* Camera Screen */
-        .camera-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex: 1;
-            background: #000;
-        }
-
-        .camera-guide {
-            width: 280px;
-            height: 280px;
-            border: 3px solid var(--primary);
-            border-radius: 16px;
-            margin-bottom: 16px;
-            background: rgba(77, 184, 255, 0.05);
-        }
-
-        .camera-text {
-            color: white;
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .camera-controls {
-            width: 100%;
-            display: flex;
-            justify-content: space-around;
-            align-items: flex-end;
-            padding: 24px;
-            gap: 12px;
-        }
-
-        .camera-button {
-            width: 56px;
-            height: 56px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            cursor: pointer;
-            font-size: 28px;
-            transition: all 0.3s;
-        }
-
-        .camera-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .camera-capture {
-            width: 72px;
-            height: 72px;
-            border-radius: 36px;
-            background: var(--primary);
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: all 0.3s;
-        }
-
-        .camera-capture:hover {
-            transform: scale(1.05);
-        }
-
-        /* Plant Details */
-        .plant-details {
-            background: white;
         }
 
         .detail-image {
@@ -558,13 +589,15 @@
             font-weight: 600;
             transition: all 0.3s;
             color: white;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .action-button-water {
             background: var(--primary);
         }
 
-        .action-button-water:hover {
+        .action-button-water:active {
             background: #2ba5e0;
         }
 
@@ -572,7 +605,7 @@
             background: var(--warning);
         }
 
-        .action-button-diagnose:hover {
+        .action-button-diagnose:active {
             background: #f57c00;
         }
 
@@ -597,7 +630,6 @@
             font-size: 13px;
             color: var(--text);
             flex: 2;
-            flex-wrap: wrap;
         }
 
         .detail-text {
@@ -609,10 +641,9 @@
         .list-item {
             font-size: 13px;
             color: var(--text);
-            margin-vertical: 4px;
+            margin: 4px 0;
         }
 
-        /* Loading Animation */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -655,20 +686,19 @@
             color: var(--text-secondary);
         }
 
-        /* Bottom Navigation */
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            max-width: 480px;
-            margin: 0 auto;
             background: white;
             border-top: 1px solid var(--border);
             display: flex;
             justify-content: space-around;
             height: 60px;
             box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+            z-index: 20;
+            flex-shrink: 0;
         }
 
         .nav-item {
@@ -683,17 +713,18 @@
             border: none;
             background: none;
             font-size: 24px;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .nav-item.active {
             color: var(--primary);
         }
 
-        .nav-item:hover {
+        .nav-item:active {
             color: var(--primary);
         }
 
-        /* Settings */
         .form-group {
             margin-bottom: 16px;
         }
@@ -711,10 +742,12 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 10px 12px;
-            font-size: 13px;
+            font-size: 16px;
             color: var(--text);
             background: var(--light);
             font-family: inherit;
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .form-input:focus {
@@ -749,7 +782,6 @@
             font-weight: 500;
         }
 
-        /* Diagnosis */
         .status-badge {
             display: flex;
             align-items: center;
@@ -837,35 +869,43 @@
             line-height: 18px;
         }
 
-        /* Responsive */
-        @media (max-width: 480px) {
-            .app {
-                box-shadow: none;
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        @supports (padding: max(0px)) {
+            .header {
+                padding-top: max(12px, env(safe-area-inset-top));
             }
-        }
 
-        /* Scrollbar */
-        .screen-content::-webkit-scrollbar {
-            width: 4px;
-        }
+            .bottom-nav {
+                padding-bottom: max(0px, env(safe-area-inset-bottom));
+                height: calc(60px + max(0px, env(safe-area-inset-bottom)));
+            }
 
-        .screen-content::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .screen-content::-webkit-scrollbar-thumb {
-            background: #ccc;
-            border-radius: 2px;
-        }
-
-        .screen-content::-webkit-scrollbar-thumb:hover {
-            background: #999;
+            .screen {
+                padding-bottom: calc(80px + max(0px, env(safe-area-inset-bottom)));
+            }
         }
     </style>
 </head>
 <body>
     <div class="app">
-        <!-- Home Screen -->
+        <!-- HOME SCREEN -->
         <div id="home-screen" class="screen active">
             <div class="header">
                 <div class="spacer"></div>
@@ -876,7 +916,7 @@
             <div class="screen-content">
                 <div class="home-hero">
                     <div class="home-logo">🌿</div>
-                    <div class="home-title">Plant Care Assistant</div>
+                    <div class="home-title">Plant Care</div>
                     <div class="home-subtitle">Cuida tus plantas como nunca antes</div>
                 </div>
 
@@ -895,10 +935,7 @@
                 </button>
 
                 <div class="section" id="alerts-section" style="display: none;">
-                    <div class="section-header">
-                        <div class="section-title">⏰ Próximos Riegos</div>
-                        <div class="see-all" onclick="goToAlerts()">Ver todos</div>
-                    </div>
+                    <div class="section-title">⏰ Próximos Riegos</div>
                     <div id="alerts-preview"></div>
                 </div>
 
@@ -936,29 +973,32 @@
             </div>
         </div>
 
-        <!-- Camera Screen -->
-        <div id="camera-screen" class="screen">
+        <!-- CAMERA SCREEN -->
+        <div id="camera-screen" class="screen camera-screen">
             <div class="header">
-                <button class="btn-back" onclick="showScreen('home-screen')">←</button>
+                <button class="btn-back" onclick="stopCamera(); showScreen('home-screen')">←</button>
                 <div class="header-title">Escanear</div>
                 <div class="spacer"></div>
             </div>
 
             <div class="camera-container">
+                <video id="camera-video" class="camera-video" playsinline muted autoplay webkit-playsinline></video>
                 <div class="camera-guide"></div>
                 <div class="camera-text">Posiciona la planta en el marco</div>
+                <div class="camera-controls">
+                    <button class="camera-button" onclick="uploadImage()">🖼️</button>
+                    <button class="camera-capture" onclick="capturePlantPhoto()">
+                        <div class="camera-capture-inner"></div>
+                    </button>
+                    <div style="width: 56px;"></div>
+                </div>
             </div>
 
-            <div class="camera-controls">
-                <button class="camera-button" onclick="uploadImage()">🖼️</button>
-                <button class="camera-capture" onclick="capturePlant()"></button>
-                <div style="width: 56px;"></div>
-            </div>
-
+            <canvas id="capture-canvas"></canvas>
             <input type="file" id="image-input" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
         </div>
 
-        <!-- Library Screen -->
+        <!-- LIBRARY SCREEN -->
         <div id="library-screen" class="screen">
             <div class="header">
                 <button class="btn-back" onclick="showScreen('home-screen')">←</button>
@@ -977,7 +1017,7 @@
             </div>
         </div>
 
-        <!-- Plant Details Screen -->
+        <!-- PLANT DETAILS SCREEN -->
         <div id="details-screen" class="screen">
             <div class="header">
                 <button class="btn-back" onclick="showScreen('library-screen')">←</button>
@@ -985,34 +1025,35 @@
                 <button class="btn-back" onclick="deletePlant()" style="color: var(--danger);">🗑️</button>
             </div>
 
-            <div class="screen-content" id="details-content">
-                <!-- Contenido dinámico -->
-            </div>
+            <div class="screen-content" id="details-content"></div>
         </div>
 
-        <!-- Diagnosis Screen -->
-        <div id="diagnosis-screen" class="screen">
+        <!-- DIAGNOSIS SCREEN -->
+        <div id="diagnosis-screen" class="screen camera-screen">
             <div class="header">
-                <button class="btn-back" onclick="showScreen('library-screen')">←</button>
+                <button class="btn-back" onclick="stopCamera(); showScreen('library-screen')">←</button>
                 <div class="header-title">Diagnóstico</div>
                 <div class="spacer"></div>
             </div>
 
             <div class="camera-container">
+                <video id="diagnosis-video" class="camera-video" playsinline muted autoplay webkit-playsinline></video>
                 <div class="camera-guide" style="border-color: var(--warning);"></div>
                 <div class="camera-text">Fotografía la zona afectada</div>
+                <div class="camera-controls">
+                    <button class="camera-button" onclick="uploadDiagnosisImage()">🖼️</button>
+                    <button class="camera-capture" style="background: var(--warning);" onclick="captureDiagnosisPhoto()">
+                        <div class="camera-capture-inner"></div>
+                    </button>
+                    <div style="width: 56px;"></div>
+                </div>
             </div>
 
-            <div class="camera-controls">
-                <button class="camera-button" onclick="uploadDiagnosisImage()">🖼️</button>
-                <button class="camera-capture" style="background: var(--warning);" onclick="captureDiagnosis()"></button>
-                <div style="width: 56px;"></div>
-            </div>
-
+            <canvas id="diagnosis-canvas"></canvas>
             <input type="file" id="diagnosis-input" accept="image/*" style="display: none;" onchange="handleDiagnosisUpload(event)">
         </div>
 
-        <!-- Diagnosis Results -->
+        <!-- DIAGNOSIS RESULTS SCREEN -->
         <div id="diagnosis-results-screen" class="screen">
             <div class="header">
                 <button class="btn-back" onclick="goToDiagnosis()">←</button>
@@ -1020,12 +1061,10 @@
                 <div class="spacer"></div>
             </div>
 
-            <div class="screen-content" id="diagnosis-results-content">
-                <!-- Contenido dinámico -->
-            </div>
+            <div class="screen-content" id="diagnosis-results-content"></div>
         </div>
 
-        <!-- Alerts Screen -->
+        <!-- ALERTS SCREEN -->
         <div id="alerts-screen" class="screen">
             <div class="header">
                 <button class="btn-back" onclick="showScreen('home-screen')">←</button>
@@ -1043,7 +1082,7 @@
             </div>
         </div>
 
-        <!-- Settings Screen -->
+        <!-- SETTINGS SCREEN -->
         <div id="settings-screen" class="screen">
             <div class="header">
                 <button class="btn-back" onclick="showScreen('home-screen')">←</button>
@@ -1053,30 +1092,34 @@
 
             <div class="screen-content">
                 <div class="section">
-                    <div class="section-title">📍 Tu Ubicación</div>
+                    <div class="section-title">🔑 API Key de Claude</div>
                     <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
-                        Usamos tu ubicación para adaptar consejos de riego
+                        Obtén tu key gratis en https://console.anthropic.com/
                     </div>
 
+                    <div class="form-group">
+                        <label class="form-label">Tu API Key:</label>
+                        <input type="password" id="api-key-input" class="form-input" placeholder="sk-ant-...">
+                    </div>
+
+                    <button class="btn" onclick="saveApiKey()">Guardar API Key</button>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">📍 Tu Ubicación</div>
                     <div class="form-group">
                         <label class="form-label">Ubicación:</label>
                         <input type="text" id="location-input" class="form-input" value="Calle Caballero 66, Barcelona">
                     </div>
-
                     <button class="btn" onclick="saveLocation()">Guardar Ubicación</button>
                 </div>
 
                 <div class="section">
                     <div class="section-title">☀️ Exposición al Sol</div>
-                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
-                        Describe cómo es la luz solar en tu ubicación
-                    </div>
-
                     <div class="form-group">
-                        <label class="form-label">Exposición al sol:</label>
+                        <label class="form-label">Describe la luz solar:</label>
                         <textarea id="sun-input" class="form-input form-textarea" placeholder="Ej: Sol fuerte por las tardes en verano, sol indirecto el resto del día"></textarea>
                     </div>
-
                     <button class="btn" onclick="saveSunExposure()">Guardar</button>
                 </div>
 
@@ -1090,23 +1133,16 @@
                         <div class="info-label">Tecnología:</div>
                         <div class="info-value">HTML5 + JS</div>
                     </div>
-                    <div class="info-card">
-                        <div class="info-label">IA:</div>
-                        <div class="info-value">Claude Vision API</div>
-                    </div>
                 </div>
 
                 <div class="section">
                     <div class="section-title">⚠️ Zona de Peligro</div>
                     <button class="btn btn-danger" onclick="clearAllData()">🗑️ Eliminar Todos los Datos</button>
-                    <div style="font-size: 11px; color: var(--danger); font-style: italic; margin-top: 8px;">
-                        Esta acción eliminará todas tus plantas. No se puede deshacer.
-                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Bottom Navigation -->
+        <!-- BOTTOM NAVIGATION -->
         <div class="bottom-nav">
             <button class="nav-item active" onclick="goToHome()">🏠</button>
             <button class="nav-item" onclick="goToCamera()">📸</button>
@@ -1116,7 +1152,7 @@
         </div>
     </div>
 
-    <!-- Loading Overlay -->
+    <!-- LOADING OVERLAY -->
     <div id="loading-overlay" class="loading-overlay">
         <div class="loading-spinner">🌿</div>
         <div class="loading-text">Analizando tu planta...</div>
@@ -1124,23 +1160,117 @@
     </div>
 
     <script>
-        // ========== API Configuration ==========
-        const API_KEY = localStorage.getItem('claudeApiKey') || '';
+        // ========== CONFIG ==========
         const API_URL = 'https://api.anthropic.com/v1/messages';
+        let API_KEY = localStorage.getItem('claudeApiKey') || '';
 
-        // ========== State Management ==========
+        // ========== STATE ==========
         let plants = JSON.parse(localStorage.getItem('plants')) || [];
         let userLocation = JSON.parse(localStorage.getItem('userLocation')) || { address: 'Calle Caballero 66, Barcelona' };
         let currentPlantId = null;
         let currentDiagnosisPlant = null;
+        let cameraStream = null;
 
-        // ========== Initialization ==========
+        // ========== INIT ==========
         document.addEventListener('DOMContentLoaded', () => {
             loadData();
             updateHomeScreen();
+            const savedApiKey = localStorage.getItem('claudeApiKey');
+            if (savedApiKey) {
+                document.getElementById('api-key-input').value = savedApiKey;
+                API_KEY = savedApiKey;
+            }
         });
 
-        // ========== Storage Functions ==========
+        // ========== CAMERA ==========
+        async function startCamera(videoElementId = 'camera-video') {
+            try {
+                console.log('Iniciando cámara...');
+                const videoElement = document.getElementById(videoElementId);
+
+                const constraints = {
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                };
+
+                cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+                console.log('Stream obtenido');
+
+                videoElement.srcObject = cameraStream;
+                videoElement.play();
+                console.log('Cámara iniciada correctamente');
+            } catch (error) {
+                console.error('Error cámara:', error);
+                alert('ERROR DE CÁMARA:\n\n' + error.message + '\n\nSoluciones:\n1. Permite acceso a la cámara\n2. Usa Safari en iPhone\n3. Asegúrate de HTTPS o localhost\n4. Recarga la página');
+            }
+        }
+
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+                console.log('Cámara detenida');
+            }
+        }
+
+        async function capturePlantPhoto() {
+            try {
+                const videoElement = document.getElementById('camera-video');
+                const canvas = document.getElementById('capture-canvas');
+                const ctx = canvas.getContext('2d');
+
+                canvas.width = videoElement.videoWidth;
+                canvas.height = videoElement.videoHeight;
+
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+                ctx.drawImage(videoElement, 0, 0);
+
+                canvas.toBlob(async (blob) => {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const base64 = e.target.result.split(',')[1];
+                        await identifyPlant(base64, e.target.result);
+                    };
+                    reader.readAsDataURL(blob);
+                }, 'image/jpeg', 0.8);
+            } catch (error) {
+                console.error('Error captura:', error);
+                alert('Error al capturar: ' + error.message);
+            }
+        }
+
+        async function captureDiagnosisPhoto() {
+            try {
+                const videoElement = document.getElementById('diagnosis-video');
+                const canvas = document.getElementById('diagnosis-canvas');
+                const ctx = canvas.getContext('2d');
+
+                canvas.width = videoElement.videoWidth;
+                canvas.height = videoElement.videoHeight;
+
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+                ctx.drawImage(videoElement, 0, 0);
+
+                canvas.toBlob(async (blob) => {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const base64 = e.target.result.split(',')[1];
+                        await diagnosePlant(base64);
+                    };
+                    reader.readAsDataURL(blob);
+                }, 'image/jpeg', 0.8);
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // ========== STORAGE ==========
         function loadData() {
             plants = JSON.parse(localStorage.getItem('plants')) || [];
             userLocation = JSON.parse(localStorage.getItem('userLocation')) || { address: 'Calle Caballero 66, Barcelona' };
@@ -1162,6 +1292,17 @@
             saveData();
         }
 
+        function saveApiKey() {
+            const apiKey = document.getElementById('api-key-input').value.trim();
+            if (!apiKey) {
+                alert('Por favor ingresa una API key');
+                return;
+            }
+            localStorage.setItem('claudeApiKey', apiKey);
+            API_KEY = apiKey;
+            alert('✓ API Key guardada');
+        }
+
         function deletePlant() {
             if (confirm('¿Eliminar esta planta?')) {
                 plants = plants.filter(p => p.id !== currentPlantId);
@@ -1172,21 +1313,29 @@
         }
 
         function clearAllData() {
-            if (confirm('¿Estás seguro? Esto eliminará todas tus plantas.')) {
+            if (confirm('¿Eliminar TODO?')) {
                 plants = [];
                 localStorage.clear();
-                saveData();
                 showScreen('home-screen');
                 updateHomeScreen();
             }
         }
 
-        // ========== Navigation ==========
+        // ========== NAVIGATION ==========
         function showScreen(screenId) {
+            if (screenId !== 'camera-screen' && screenId !== 'diagnosis-screen') {
+                stopCamera();
+            }
+
+            if (screenId === 'camera-screen') {
+                setTimeout(() => startCamera('camera-video'), 100);
+            } else if (screenId === 'diagnosis-screen') {
+                setTimeout(() => startCamera('diagnosis-video'), 100);
+            }
+
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
 
-            // Update nav items
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             const navMap = {
                 'home-screen': 0,
@@ -1207,7 +1356,7 @@
         function goToSettings() { loadData(); showScreen('settings-screen'); }
         function goToDiagnosis() { showScreen('diagnosis-screen'); }
 
-        // ========== Screen Updates ==========
+        // ========== UI UPDATES ==========
         function updateHomeScreen() {
             const plantCount = plants.length;
             document.getElementById('empty-state').style.display = plantCount === 0 ? 'block' : 'none';
@@ -1216,7 +1365,6 @@
 
             if (plantCount > 0) {
                 document.getElementById('stat-plants').textContent = plantCount;
-
                 const alerts = getWateringAlerts().slice(0, 3);
                 document.getElementById('stat-urgent').textContent = alerts.filter(a => a.urgency === 'urgent').length;
                 document.getElementById('stat-watered').textContent = plants.filter(p => p.lastWatered).length;
@@ -1226,9 +1374,8 @@
                         <div class="alert-content">
                             <div class="alert-plant-name">${alert.plantName}</div>
                             <div class="alert-message">${alert.message}</div>
-                            <div class="alert-date">Próximo: ${new Date(alert.nextWateringDate).toLocaleDateString('es-ES')}</div>
                         </div>
-                        <div class="alert-arrow">→</div>
+                        <div style="font-size: 20px; color: #ccc;">→</div>
                     </div>
                 `).join('');
                 document.getElementById('alerts-preview').innerHTML = alertsHtml;
@@ -1242,7 +1389,6 @@
                     <div class="plant-card-content">
                         <div class="plant-name">${plant.name}</div>
                         <div class="plant-scientific">${plant.scientificName}</div>
-                        <div class="plant-date">Escaneada: ${new Date(plant.dateScanned).toLocaleDateString('es-ES')}</div>
                     </div>
                 </div>
             `).join('');
@@ -1254,13 +1400,11 @@
         function updateAlerts() {
             const alerts = getWateringAlerts();
             const alertsHtml = alerts.map(alert => `
-                <div class="alert-card ${alert.urgency}" onclick="goToPlantDetails('${alert.plantId}')">
+                <div class="alert-card ${alert.urgency}">
                     <div class="alert-content">
                         <div class="alert-plant-name">${alert.plantName}</div>
                         <div class="alert-message">${alert.message}</div>
-                        <div class="alert-date">Próximo: ${new Date(alert.nextWateringDate).toLocaleDateString('es-ES')}</div>
                     </div>
-                    <div class="alert-arrow">→</div>
                 </div>
                 <button class="btn btn-small" onclick="waterPlant('${alert.plantId}')">💧 Regar</button>
             `).join('');
@@ -1269,8 +1413,9 @@
             document.getElementById('alerts-empty').style.display = alerts.length === 0 ? 'block' : 'none';
         }
 
-        // ========== Plant Details ==========
+        // ========== PLANT DETAILS ==========
         function goToPlantDetails(plantId) {
+            stopCamera();
             currentPlantId = plantId;
             const plant = plants.find(p => p.id === plantId);
             if (!plant) return;
@@ -1303,21 +1448,13 @@
                         <div class="detail-label">Frecuencia:</div>
                         <div class="detail-value">${pd.watering.frequency}</div>
                     </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Cantidad:</div>
-                        <div class="detail-value">${pd.watering.amount}</div>
-                    </div>
                 </div>
 
                 <div class="detail-section">
-                    <div class="section-title">☀️ Exposición al Sol</div>
+                    <div class="section-title">☀️ Sol</div>
                     <div class="detail-row">
                         <div class="detail-label">Preferencia:</div>
                         <div class="detail-value">${pd.sunlight.preference}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Horas:</div>
-                        <div class="detail-value">${pd.sunlight.hours}</div>
                     </div>
                 </div>
 
@@ -1326,14 +1463,6 @@
                     <div class="detail-row">
                         <div class="detail-label">Ideal:</div>
                         <div class="detail-value">${pd.temperature.ideal}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Mínima:</div>
-                        <div class="detail-value">${pd.temperature.minimum}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Máxima:</div>
-                        <div class="detail-value">${pd.temperature.maximum}</div>
                     </div>
                 </div>
 
@@ -1350,15 +1479,6 @@
                 </div>
             `;
 
-            if (pd.commonPests && pd.commonPests.length > 0) {
-                html += `
-                    <div class="detail-section">
-                        <div class="section-title">🐛 Plagas Comunes</div>
-                        ${pd.commonPests.map(pest => `<div class="list-item">• ${pest}</div>`).join('')}
-                    </div>
-                `;
-            }
-
             document.getElementById('details-content').innerHTML = html;
             showScreen('details-screen');
         }
@@ -1368,13 +1488,14 @@
             if (!plant) return;
 
             plant.lastWatered = new Date().toISOString();
-            const freqDays = parseInt(plant.plantData.watering.frequency.match(/\d+/)[0]) || 7;
+            const freqMatch = plant.plantData.watering.frequency.match(/\d+/);
+            const freqDays = freqMatch ? parseInt(freqMatch[0]) : 7;
             const nextDate = new Date();
             nextDate.setDate(nextDate.getDate() + freqDays);
             plant.nextWateringDate = nextDate.toISOString();
 
             savePlant(plant);
-            alert(`✓ ${plant.name} regada correctamente`);
+            alert(`✓ ${plant.name} regada`);
 
             if (currentPlantId === plantId) {
                 goToPlantDetails(plantId);
@@ -1383,20 +1504,19 @@
             updateAlerts();
         }
 
-        // ========== Diagnosis ==========
+        // ========== DIAGNOSIS ==========
         function startDiagnosis(plantId) {
             currentDiagnosisPlant = plants.find(p => p.id === plantId);
             showScreen('diagnosis-screen');
         }
 
-        // ========== Camera & Image Upload ==========
+        // ========== IMAGE UPLOAD ==========
         function uploadImage() {
             document.getElementById('image-input').click();
         }
 
-        function capturePlant() {
-            alert('En la versión web, usa el botón de galería para seleccionar una foto');
-            uploadImage();
+        function uploadDiagnosisImage() {
+            document.getElementById('diagnosis-input').click();
         }
 
         async function handleImageUpload(event) {
@@ -1411,15 +1531,6 @@
             reader.readAsDataURL(file);
         }
 
-        function uploadDiagnosisImage() {
-            document.getElementById('diagnosis-input').click();
-        }
-
-        function captureDiagnosis() {
-            alert('En la versión web, usa el botón de galería');
-            uploadDiagnosisImage();
-        }
-
         async function handleDiagnosisUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1432,10 +1543,11 @@
             reader.readAsDataURL(file);
         }
 
-        // ========== API Calls ==========
+        // ========== API CALLS ==========
         async function identifyPlant(base64Image, imageUri) {
             if (!API_KEY) {
-                alert('Por favor, configura tu API Key de Claude en Configuración');
+                alert('Configura tu API Key en ⚙️ Configuración');
+                goToSettings();
                 return;
             }
 
@@ -1463,12 +1575,12 @@
                                 }
                             }, {
                                 type: 'text',
-                                text: `Identifica esta planta y proporciona información detallada en formato JSON:
+                                text: `Identifica esta planta y proporciona información en JSON:
                                 {
                                     "name": "nombre común",
                                     "scientificName": "nombre científico",
                                     "family": "familia",
-                                    "description": "descripción breve",
+                                    "description": "descripción",
                                     "watering": {
                                         "frequency": "cada X días",
                                         "amount": "cantidad",
@@ -1492,7 +1604,7 @@
                                     "specialCare": ["cuidados"],
                                     "difficulty": "Fácil/Medio/Difícil"
                                 }
-                                Responde SOLO con el JSON válido.`
+                                Responde SOLO con el JSON.`
                             }]
                         }]
                     })
@@ -1530,7 +1642,8 @@
 
         async function diagnosePlant(base64Image) {
             if (!API_KEY) {
-                alert('Por favor, configura tu API Key de Claude en Configuración');
+                alert('Configura tu API Key primero');
+                goToSettings();
                 return;
             }
 
@@ -1563,8 +1676,7 @@
                                 }
                             }, {
                                 type: 'text',
-                                text: `Analiza esta foto de una planta ${currentDiagnosisPlant.name} ubicada en ${userLocation.address}.
-                                Proporciona diagnóstico en JSON:
+                                text: `Analiza esta foto de ${currentDiagnosisPlant.name} en ${userLocation.address}. Proporciona JSON:
                                 {
                                     "status": "saludable/moderado/crítico",
                                     "problems": ["problema 1"],
@@ -1572,7 +1684,7 @@
                                     "urgency": "Baja/Media/Alta",
                                     "nextSteps": ["paso 1"]
                                 }
-                                Responde SOLO con el JSON válido.`
+                                Responde SOLO con el JSON.`
                             }]
                         }]
                     })
@@ -1593,13 +1705,11 @@
             } catch (error) {
                 showLoading(false);
                 alert('Error: ' + error.message);
-                console.error(error);
             }
         }
 
         function showDiagnosisResults(diagnosis) {
-            const statusIcon = diagnosis.status === 'saludable' ? '✅' :
-                             diagnosis.status === 'moderado' ? '⚠️' : '🔴';
+            const statusIcon = diagnosis.status === 'saludable' ? '✅' : diagnosis.status === 'moderado' ? '⚠️' : '🔴';
 
             let html = `
                 <div class="status-badge status-badge-${diagnosis.status === 'saludable' ? 'healthy' : diagnosis.status === 'moderado' ? 'moderate' : 'critical'}">
@@ -1610,7 +1720,7 @@
                 </div>
 
                 <div class="detail-section">
-                    <div class="section-title">Nivel de Urgencia</div>
+                    <div class="section-title">Urgencia</div>
                     <div class="urgency-badge urgency-${diagnosis.urgency === 'Alta' ? 'high' : diagnosis.urgency === 'Media' ? 'medium' : 'low'}">
                         ${diagnosis.urgency}
                     </div>
@@ -1620,7 +1730,7 @@
             if (diagnosis.problems && diagnosis.problems.length > 0) {
                 html += `
                     <div class="detail-section">
-                        <div class="section-title">Problemas Detectados</div>
+                        <div class="section-title">Problemas</div>
                         ${diagnosis.problems.map(p => `
                             <div class="problem-item">
                                 <div class="problem-bullet">⚠️</div>
@@ -1645,50 +1755,36 @@
                 `;
             }
 
-            if (diagnosis.nextSteps && diagnosis.nextSteps.length > 0) {
-                html += `
-                    <div class="detail-section">
-                        <div class="section-title">Próximos Pasos</div>
-                        ${diagnosis.nextSteps.map((step, i) => `
-                            <div class="step-item">
-                                <div class="step-number">${i + 1}</div>
-                                <div class="step-text">${step}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
-
             html += `<button class="btn" onclick="goToDiagnosis()" style="margin: 16px 0;">📷 Nuevo Diagnóstico</button>`;
 
             document.getElementById('diagnosis-results-content').innerHTML = html;
             showScreen('diagnosis-results-screen');
         }
 
-        // ========== Settings ==========
+        // ========== SETTINGS ==========
         function saveLocation() {
             const address = document.getElementById('location-input').value;
             if (!address.trim()) {
-                alert('Por favor ingresa una ubicación');
+                alert('Ingresa una ubicación');
                 return;
             }
             userLocation = { address };
             localStorage.setItem('userLocation', JSON.stringify(userLocation));
             document.getElementById('location-display').textContent = address;
-            alert('Ubicación guardada');
+            alert('✓ Ubicación guardada');
         }
 
         function saveSunExposure() {
             const exposure = document.getElementById('sun-input').value;
             if (!exposure.trim()) {
-                alert('Por favor describe la exposición al sol');
+                alert('Describe la exposición al sol');
                 return;
             }
             localStorage.setItem('sunExposure', exposure);
-            alert('Configuración guardada');
+            alert('✓ Guardado');
         }
 
-        // ========== Alerts ==========
+        // ========== ALERTS ==========
         function getWateringAlerts() {
             return plants.map(plant => {
                 const lastWatered = plant.lastWatered ? new Date(plant.lastWatered) : new Date();
@@ -1707,14 +1803,13 @@
                 const daysUntil = Math.ceil((nextDate - now) / (1000 * 60 * 60 * 24));
 
                 let urgency = 'normal';
-                let message = `${plant.name} necesitará agua en ${daysUntil} día(s)`;
+                let message = `${plant.name} en ${daysUntil} día(s)`;
 
                 if (daysUntil <= 0) {
                     urgency = 'urgent';
-                    message = `${plant.name} necesita agua ya`;
+                    message = `${plant.name} AHORA`;
                 } else if (daysUntil <= 2) {
                     urgency = 'soon';
-                    message = `${plant.name} necesitará agua en ${daysUntil} día(s)`;
                 }
 
                 return {
@@ -1728,14 +1823,18 @@
             }).sort((a, b) => a.daysUntilWatering - b.daysUntilWatering);
         }
 
-        // ========== UI Helpers ==========
+        // ========== UI HELPERS ==========
         function showLoading(show) {
             document.getElementById('loading-overlay').classList.toggle('active', show);
         }
 
-        // Event listeners
+        // ========== EVENT LISTENERS ==========
         document.getElementById('image-input').addEventListener('change', handleImageUpload);
         document.getElementById('diagnosis-input').addEventListener('change', handleDiagnosisUpload);
+
+        window.addEventListener('beforeunload', () => {
+            stopCamera();
+        });
     </script>
 </body>
 </html>
