@@ -16,6 +16,7 @@ let ajustes = db.getAjustes();
 let vistaActual = 'inicio';
 let plantaAbierta = null;
 let modoFoto = 'nueva'; // 'nueva' | 'revision'
+let analizando = false; // evita lanzar dos análisis a la vez: cada uno se cobra
 const urlsCreadas = new Set();
 
 // ---------- Utilidades ----------
@@ -79,10 +80,12 @@ function mostrar(nombre, { titulo, atras } = {}) {
   window.scrollTo(0, 0);
 }
 
-function irAInicio() {
+async function irAInicio() {
   plantaAbierta = null;
+  // Pintamos antes de mostrar: si no, asoma un instante el estado vacío
+  // mientras se leen las plantas de IndexedDB.
+  await pintarInicio();
   mostrar('inicio');
-  pintarInicio();
 }
 
 // ---------- Pantalla de inicio ----------
@@ -361,6 +364,7 @@ function pantallaCarga({ titulo, texto, previaURL }) {
 }
 
 async function procesarFoto(file) {
+  if (analizando) return; // ya hay un análisis en marcha
   if (!ajustes.apiKey) {
     brindis('Primero pon tu API key en Ajustes');
     abrirAjustes();
@@ -372,7 +376,7 @@ async function procesarFoto(file) {
     foto = await prepararFoto(file);
   } catch (err) {
     brindis(err.message);
-    irAInicio();
+    await irAInicio();
     return;
   }
 
@@ -388,6 +392,7 @@ async function procesarFoto(file) {
     previaURL,
   });
 
+  analizando = true;
   try {
     if (esRevision) {
       await guardarRevision(plantaAbierta, foto);
@@ -398,8 +403,9 @@ async function procesarFoto(file) {
     console.error(err);
     brindis(mensajeError(err));
     if (esRevision && plantaAbierta) await pintarFicha(plantaAbierta);
-    else irAInicio();
+    else await irAInicio();
   } finally {
+    analizando = false;
     modoFoto = 'nueva';
   }
 }
@@ -479,6 +485,10 @@ async function marcarRegada(id) {
 }
 
 function pedirFoto(modo, origen = 'camara') {
+  if (analizando) {
+    brindis('Espera a que termine el análisis en curso');
+    return;
+  }
   modoFoto = modo;
   $(origen === 'camara' ? '#entrada-camara' : '#entrada-galeria').click();
 }
@@ -536,7 +546,7 @@ vistas.ficha.addEventListener('click', async (e) => {
     if (!confirm(`¿Eliminar ${nombre} y todas sus revisiones?`)) return;
     await db.deletePlant(plantaAbierta.id);
     brindis('Planta eliminada');
-    irAInicio();
+    await irAInicio();
   }
 });
 
@@ -556,7 +566,7 @@ $('#btn-borrar-todo').addEventListener('click', async () => {
   await db.wipeAll();
   ajustes = db.getAjustes();
   brindis('Todo borrado');
-  irAInicio();
+  await irAInicio();
 });
 
 // ---------- Arranque ----------
