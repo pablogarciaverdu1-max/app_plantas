@@ -1,18 +1,19 @@
 // Service worker: guarda el esqueleto de la app para que abra sin conexión.
-// Las llamadas a Claude y a Wikipedia siempre van a la red (nunca se cachean).
+// Las llamadas a Pl@ntNet y a Wikipedia siempre van a la red (nunca se cachean).
 
-const CACHE = 'verdin-v1';
+const CACHE = 'verdin-v2';
 
 const ESQUELETO = [
   './',
   './index.html',
   './css/app.css',
   './js/app.js',
-  './js/claude.js',
+  './js/cuidados.js',
   './js/db.js',
   './js/imagen.js',
+  './js/plantnet.js',
   './js/riego.js',
-  './vendor/anthropic.js',
+  './js/wiki.js',
   './manifest.webmanifest',
   './icons/icon-180.png',
   './icons/icon-192.png',
@@ -40,7 +41,7 @@ self.addEventListener('fetch', (evento) => {
   if (peticion.method !== 'GET') return;
 
   const url = new URL(peticion.url);
-  // Todo lo que no sea de nuestro origen (API de Claude, imágenes de Wikipedia)
+  // Todo lo que no sea de nuestro origen (Pl@ntNet, imágenes de Wikipedia)
   // va directo a la red.
   if (url.origin !== self.location.origin) return;
 

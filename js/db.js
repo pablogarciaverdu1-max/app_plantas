@@ -74,10 +74,7 @@ export async function allPlants() {
 
 export async function deletePlant(id) {
   const plant = await getPlant(id);
-  if (plant) {
-    const ids = [plant.fotoId, ...(plant.historial || []).map((h) => h.fotoId)];
-    for (const fid of ids.filter(Boolean)) await deletePhoto(fid);
-  }
+  if (plant?.fotoId) await deletePhoto(plant.fotoId);
   return tx(STORE_PLANTS, 'readwrite', (s) => s.delete(id));
 }
 
@@ -92,9 +89,7 @@ export async function wipeAll() {
 const AJUSTES_KEY = 'plantas.ajustes';
 
 export const ajustesPorDefecto = {
-  apiKey: '',
-  ubicacion: '',
-  notas: '',
+  plantnetKey: '',
 };
 
 export function getAjustes() {

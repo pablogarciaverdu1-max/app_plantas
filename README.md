@@ -1,70 +1,72 @@
 # 🌿 Verdín
 
-App web para el iPhone: le haces una foto a una planta y te dice qué variedad es,
-**cómo está de salud según esa foto concreta** y cómo cuidarla.
+App web para el iPhone: le haces una foto a una planta y te dice qué especie es,
+te habla de ella y te da su ficha de cuidados.
 
-Se instala en la pantalla de inicio como una app normal, usa la cámara del móvil
-y se conecta directamente a tu cuenta de Claude.
+Se instala en la pantalla de inicio como una app normal y **no cuesta dinero**:
+no hay ninguna API de pago por medio.
 
 ## Qué te da con una foto
 
-- **Identificación** — nombre común, nombre científico, familia y un porcentaje de
-  certeza. Si la foto no da para más, te lista las especies alternativas.
-- **Estado de salud** — puntuación de 0 a 100 y un diagnóstico de lo que se ve
-  *en tu foto*: dónde empieza una mancha, qué hoja está decaída. No síntomas
-  genéricos de la especie.
-- **Qué hacer** — acciones ordenadas por urgencia (ahora / esta semana / mantenimiento).
-- **Riego** — cada cuántos días en verano y en invierno, cantidad, método, tipo de
-  agua, y una prueba casera para saber si toca regar. Con eso la app te calcula el
-  calendario y te avisa en la pantalla de inicio.
-- **Sol** — exposición, horas y dónde ponerla en casa según la orientación.
-- **El resto** — temperatura, humedad, sustrato, maceta, abono, trasplante, poda,
-  plagas, esquejes, toxicidad para perros y gatos, y calendario por estaciones.
-- **Foto de referencia** de la especie, sacada de Wikipedia.
+- **La especie** — nombre común en español, nombre científico, familia y un
+  porcentaje de certeza. Si la certeza es baja, te lista las otras candidatas.
+- **De qué va la planta** — la descripción de Wikipedia, con enlace al artículo.
+- **Ficha de cuidados** — riego (cada cuántos días en verano y en invierno, método,
+  cantidad, tipo de agua y una prueba casera para saber si toca), luz, dónde
+  ponerla en casa, temperatura, humedad, sustrato, maceta, abono, trasplante,
+  poda, plagas, esquejes y toxicidad para perros y gatos.
+- **Fotos de referencia** de la especie, de la comunidad de Pl@ntNet.
+- **Recordatorios de riego** — con la frecuencia de la ficha calcula cuándo toca
+  regar cada planta y te avisa en la pantalla de inicio.
 
-Puedes volver a fotografiar una planta guardada para **revisar su salud**: compara
-con la revisión anterior, te dice si ha mejorado o empeorado y guarda el historial.
+Todo lo que fotografíes se guarda en tu biblioteca, dentro del móvil.
+
+## De dónde salen los datos (y por qué es gratis)
+
+| Qué | De dónde | Coste |
+|---|---|---|
+| Identificar la especie | [Pl@ntNet](https://my.plantnet.org/) | Gratis, 500 al día |
+| Descripción y enlace | Wikipedia | Gratis, sin clave |
+| Fichas de cuidados | Base de datos dentro de la app | Gratis, funciona sin conexión |
+
+La ficha de cuidados no necesita internet ni ninguna API: va escrita dentro de la
+app. Está organizada por **género**, no por especie, porque casi todos los consejos
+de cuidado se comparten dentro de un mismo género — todos los *Ficus* se riegan
+parecido. Eso multiplica la cobertura sin multiplicar el trabajo.
+
+Cubre las plantas de interior y de balcón más habituales. Si fotografías algo que
+no está, la app te lo dice claramente y te deja igualmente el nombre y lo que
+cuenta Wikipedia, en lugar de inventarse unos cuidados.
 
 ## Instalación en el iPhone
 
-La app son ficheros estáticos, así que vale cualquier hosting. Con GitHub Pages:
-
 1. En este repositorio, ve a **Settings → Pages** y publica la rama
    (`Deploy from a branch`, carpeta `/root`).
-2. Abre la URL que te da GitHub **en Safari** desde el iPhone.
+2. Abre la URL que te dé GitHub **en Safari** desde el iPhone.
 3. Pulsa el botón de compartir → **Añadir a pantalla de inicio**.
 
 Tiene que ser Safari: es el único navegador de iOS que instala apps en la pantalla
-de inicio. Y tiene que ser HTTPS (GitHub Pages ya lo es) o la cámara no funciona.
+de inicio. Y tiene que ser HTTPS, cosa que GitHub Pages ya te da.
 
-## Configuración
+## La clave de Pl@ntNet
 
-Abre **Ajustes** dentro de la app y rellena:
+Es gratuita y no piden tarjeta. Una vez:
 
-- **API key de Anthropic** — la creas en
-  [console.anthropic.com](https://console.anthropic.com/settings/keys). Se guarda
-  sólo en tu iPhone (`localStorage`) y sólo viaja a la API de Claude.
-- **Dónde vives** y **cómo es tu casa** — opcionales pero muy recomendables:
-  con la orientación de tus ventanas y el sol que entra, los consejos de riego y
-  ubicación dejan de ser genéricos.
-
-### Sobre el coste
-
-Cada análisis es una llamada a la API de Anthropic y se cobra a tu cuenta según
-las [tarifas de la API](https://www.anthropic.com/pricing#api). Una foto ronda las
-1.500-2.500 fichas de entrada. La app reduce cada foto a 1400 px antes de enviarla,
-que es lo que el modelo aprovecha: mandarla a 12 MP costaría más sin mejorar nada.
-
-Ojo: esto es la **API**, que se factura aparte de tu suscripción a Claude.
+1. Regístrate en [my.plantnet.org](https://my.plantnet.org/).
+2. Copia tu clave de API.
+3. **Importante:** en la configuración de la clave, marca *«expose my API key»* y
+   añade el dominio de tu app en *«Authorized domains»* (algo como
+   `tuusuario.github.io`). Sin esto el navegador bloquea las peticiones por CORS.
+   La app te enseña el dominio exacto en su pantalla de Ajustes.
+4. Pega la clave en **Ajustes** dentro de la app.
 
 ## Privacidad
 
-Todo se queda en el iPhone. Las fotos y las fichas van a IndexedDB, los ajustes a
-`localStorage`. No hay servidor propio ni analítica: los únicos sitios a los que la
-app habla son la API de Claude (tus fotos, para analizarlas) y Wikipedia (sólo el
-nombre científico, para traer la foto de referencia).
+Todo se queda en el iPhone: las fotos y las fichas en IndexedDB, la clave en
+`localStorage`. No hay servidor propio ni analítica. Tus fotos solo salen del
+móvil para ir a Pl@ntNet a identificar la especie.
 
-"Borrar todos los datos" en Ajustes lo deja todo limpio.
+«Borrar todos los datos», en Ajustes, lo deja todo limpio.
 
 ## Cómo está montado
 
@@ -74,40 +76,37 @@ Sin framework ni paso de compilación: HTML, CSS y módulos ES nativos.
 index.html              Estructura y pantallas
 css/app.css             Estilos (modo claro y oscuro, safe-areas del iPhone)
 js/app.js               Interfaz y navegación
-js/claude.js            Llamadas a la API y esquemas de respuesta
+js/plantnet.js          Identificación de especies
+js/cuidados.js          Base de datos de cuidados
+js/wiki.js              Descripción desde Wikipedia
 js/db.js                IndexedDB (fotos y fichas) y ajustes
-js/imagen.js            Reducción de fotos y foto de referencia de Wikipedia
+js/imagen.js            Reducción de las fotos antes de enviarlas
 js/riego.js             Calendario de riego y avisos
-vendor/anthropic.js     SDK oficial de Anthropic, empaquetado
 sw.js                   Service worker (la app abre sin conexión)
 ```
 
 Un par de decisiones que conviene conocer si tocas el código:
 
-- **El SDK va empaquetado en `vendor/`**, no desde un CDN, para que la app siga
-  funcionando sin conexión y no dependa de que un tercero esté levantado.
-- **`dangerouslyAllowBrowser: true`** es imprescindible: hace que el SDK mande la
-  cabecera `anthropic-dangerous-direct-browser-access` sin la cual el navegador
-  bloquea la llamada por CORS. Es aceptable aquí porque la key es tuya y nunca sale
-  de tu móvil; en una app con varios usuarios habría que poner un backend por medio.
-- **Las respuestas usan salida estructurada** (`output_config.format`), así que
-  llegan siempre como el mismo JSON y no hay que parsear texto libre.
 - **Las fotos van a IndexedDB, no a `localStorage`**, que tiene un tope de ~5 MB y
-  se llenaría con tres fotos.
-
-### Regenerar el SDK empaquetado
-
-```bash
-npm install @anthropic-ai/sdk esbuild
-echo 'export { default } from "@anthropic-ai/sdk";' > entry.js
-npx esbuild entry.js --bundle --format=esm --platform=browser --target=safari15 \
-  --alias:node:fs=./node-stub.js --alias:node:path=./node-stub.js \
-  --outfile=vendor/anthropic.js --minify
-```
-
-Los *alias* sustituyen dos importaciones de Node que el SDK sólo usa al leer
-credenciales de disco, cosa que en el navegador nunca ocurre porque la key se pasa
-explícitamente.
+  se llenaría con tres fotos del iPhone.
+- **Las fotos se reducen a 1400 px** antes de subirlas: una foto del iPhone 12 son
+  12 MP y no aportan nada para identificar la especie.
+- **La base de cuidados usa arquetipos** (`tropical`, `suculenta`, `helecho`,
+  `mediterranea`…) y cada género solo sobrescribe lo que le diferencia. Para añadir
+  una planta nueva suelen bastar tres líneas.
 
 Al actualizar cualquier fichero, sube el número de versión de `CACHE` en `sw.js`
 para que los iPhones que ya tengan la app instalada se traigan la versión nueva.
+
+### Añadir una planta a la base de cuidados
+
+En `js/cuidados.js`, dentro de `PLANTAS`:
+
+```js
+Nombre_del_genero: {
+  arq: 'tropical',                    // el arquetipo del que hereda
+  nombre: 'Nombre común',
+  riego: { verano: 7, invierno: 14 }, // solo lo que difiere del arquetipo
+  toxica: 'Tóxica para perros y gatos.',
+},
+```

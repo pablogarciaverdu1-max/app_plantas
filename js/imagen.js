@@ -1,6 +1,6 @@
-// Preparación de las fotos del iPhone antes de mandarlas a Claude.
+// Preparación de las fotos del iPhone antes de mandarlas a Pl@ntNet.
 // Una foto del iPhone 12 son ~12 MP y 3-4 MB: enviarla entera es lento y caro,
-// y la API no gana nada por encima de ~1568 px de lado largo.
+// y para identificar la especie no hace falta más de ~1400 px de lado largo.
 
 const LADO_MAX = 1400;
 const CALIDAD = 0.85;
@@ -55,42 +55,5 @@ export async function prepararFoto(file) {
   const blob = await new Promise((ok) => canvas.toBlob(ok, 'image/jpeg', CALIDAD));
   if (!blob) throw new Error('No se ha podido procesar la imagen.');
 
-  const base64 = await new Promise((ok, ko) => {
-    const lector = new FileReader();
-    lector.onload = () => ok(String(lector.result).split(',')[1]);
-    lector.onerror = () => ko(new Error('No se ha podido codificar la imagen.'));
-    lector.readAsDataURL(blob);
-  });
-
-  return { blob, base64, tipoMime: 'image/jpeg' };
-}
-
-/**
- * Busca una foto de referencia de la especie en Wikipedia (nombre científico).
- * Es opcional: si falla, la ficha se muestra igual sin ella.
- */
-export async function fotoDeReferencia(nombreCientifico) {
-  if (!nombreCientifico) return null;
-  for (const idioma of ['es', 'en']) {
-    try {
-      const url =
-        `https://${idioma}.wikipedia.org/w/api.php?action=query&format=json&origin=*` +
-        `&prop=pageimages&piprop=original|thumbnail&pithumbsize=900&redirects=1` +
-        `&titles=${encodeURIComponent(nombreCientifico)}`;
-      const res = await fetch(url);
-      if (!res.ok) continue;
-      const datos = await res.json();
-      const paginas = datos?.query?.pages || {};
-      for (const clave of Object.keys(paginas)) {
-        const p = paginas[clave];
-        const src = p?.original?.source || p?.thumbnail?.source;
-        if (src) {
-          return { src, titulo: p.title, idioma, enlace: `https://${idioma}.wikipedia.org/wiki/${encodeURIComponent(p.title)}` };
-        }
-      }
-    } catch {
-      /* Sin conexión o Wikipedia caída: no es crítico */
-    }
-  }
-  return null;
+  return { blob, tipoMime: 'image/jpeg' };
 }

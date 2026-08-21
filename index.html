@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Verdín">
-<meta name="description" content="Identifica tus plantas con una foto y descubre cómo cuidarlas y cómo están de salud.">
+<meta name="description" content="Identifica tus plantas con una foto y descubre cómo cuidarlas. Gratis.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-192.png">
@@ -52,7 +52,7 @@
   <main class="vista" id="v-inicio">
     <section class="hero">
       <div class="marca"><svg><use href="#i-hoja"/></svg><h2>Verdín</h2></div>
-      <p>Hazle una foto y sabrás qué es, cómo está y cómo cuidarla.</p>
+      <p>Hazle una foto y sabrás qué especie es y cómo cuidarla.</p>
     </section>
 
     <button class="boton-camara" id="btn-camara">
@@ -83,8 +83,8 @@
     <div class="cargando">
       <img class="previa" id="previa-cargando" alt="" hidden>
       <svg class="hoja" id="hoja-cargando"><use href="#i-hoja"/></svg>
-      <h3 id="cargando-titulo">Analizando la foto…</h3>
-      <p id="cargando-texto">Claude está mirando las hojas, el tallo y el sustrato.</p>
+      <h3>Identificando la planta…</h3>
+      <p>Comparando tu foto con la base botánica de Pl@ntNet.</p>
     </div>
   </main>
 
@@ -94,22 +94,21 @@
   <!-- Ajustes -->
   <main class="vista" id="v-ajustes" hidden>
     <div class="campo">
-      <label for="in-key">API key de Anthropic</label>
+      <label for="in-key">Clave de Pl@ntNet</label>
       <p class="pista">
-        Se guarda sólo en este iPhone y se manda únicamente a la API de Claude.
-        Créala en <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.
+        Gratuita, sin tarjeta y con 500 identificaciones al día. Regístrate en
+        <a href="https://my.plantnet.org/" target="_blank" rel="noopener">my.plantnet.org</a>,
+        crea una clave y marca <b>«expose my API key»</b> añadiendo el dominio de
+        esta app en «Authorized domains». Sin ese paso el navegador bloquea las
+        peticiones.
       </p>
-      <input type="password" id="in-key" placeholder="sk-ant-…" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <input type="password" id="in-key" placeholder="Tu clave de Pl@ntNet" autocomplete="off" autocapitalize="off" spellcheck="false">
     </div>
     <div class="campo">
-      <label for="in-ubicacion">Dónde vives</label>
-      <p class="pista">Sirve para ajustar riego y exposición a tu clima.</p>
-      <input type="text" id="in-ubicacion" placeholder="Barcelona, España" autocapitalize="words">
-    </div>
-    <div class="campo">
-      <label for="in-notas">Cómo es tu casa</label>
-      <p class="pista">Orientación, sol que entra, si hay calefacción… Cuanto más concreto, mejores consejos.</p>
-      <textarea id="in-notas" placeholder="Balcón orientado al oeste, sol fuerte por la tarde en verano. Dentro hay poca luz."></textarea>
+      <p class="pista">
+        El dominio que tienes que autorizar es este:
+        <b><span id="dominio-actual"></span></b>
+      </p>
     </div>
     <button class="boton-guardar" id="btn-guardar-ajustes">Guardar</button>
     <div class="acciones-ficha">
@@ -119,7 +118,7 @@
 
   <nav class="pestanas">
     <button data-ir="inicio" class="activa"><svg><use href="#i-inicio"/></svg>Inicio</button>
-    <button data-ir="camara"><svg><use href="#i-camara"/></svg>Analizar</button>
+    <button data-ir="camara"><svg><use href="#i-camara"/></svg>Identificar</button>
     <button data-ir="ajustes"><svg><use href="#i-ajustes"/></svg>Ajustes</button>
   </nav>
 </div>

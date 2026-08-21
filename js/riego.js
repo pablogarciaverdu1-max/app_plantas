@@ -1,4 +1,4 @@
-// Cálculo del calendario de riego a partir de la frecuencia que devuelve Claude.
+// Cálculo del calendario de riego a partir de la frecuencia de la ficha de cuidados.
 
 const DIA_MS = 86400000;
 
@@ -9,9 +9,9 @@ export function esTemporadaCalida(fecha = new Date()) {
 }
 
 export function frecuenciaActual(planta, fecha = new Date()) {
-  const r = planta?.ficha?.riego;
+  const r = planta?.cuidados?.riego;
   if (!r) return null;
-  const dias = esTemporadaCalida(fecha) ? r.frecuencia_dias_verano : r.frecuencia_dias_invierno;
+  const dias = esTemporadaCalida(fecha) ? r.verano : r.invierno;
   return Number.isFinite(dias) && dias > 0 ? dias : null;
 }
 
