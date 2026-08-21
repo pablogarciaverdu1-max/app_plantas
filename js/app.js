@@ -12,6 +12,7 @@ const vistas = {
   cargando: $('#v-cargando'),
   ficha: $('#v-ficha'),
   ajustes: $('#v-ajustes'),
+  error: $('#v-error'),
 };
 
 let ajustes = db.getAjustes();
@@ -282,6 +283,23 @@ async function pintarFicha(planta) {
   mostrar('ficha', { titulo: planta.nombre, atras: true });
 }
 
+/** Muestra el fallo a pantalla completa: algunos mensajes son instrucciones. */
+function mostrarError(err) {
+  $('#error-texto').textContent = err.message;
+  $('#error-dominio').textContent = err.dominio || '';
+  $('#error-dominio').hidden = !err.dominio;
+  $('#error-nota').textContent = err.nota || '';
+  $('#error-nota').hidden = !err.nota;
+  const enlace = $('#error-enlace');
+  if (err.ayuda) {
+    enlace.href = err.ayuda;
+    enlace.hidden = false;
+  } else {
+    enlace.hidden = true;
+  }
+  mostrar('error', { titulo: 'Error', atras: true });
+}
+
 // ---------- Identificación ----------
 
 async function procesarFoto(file) {
@@ -334,8 +352,7 @@ async function procesarFoto(file) {
     brindis(cuidados ? `Guardada: ${planta.nombre}` : `${planta.nombre}, sin ficha de cuidados`);
   } catch (err) {
     console.error(err);
-    brindis(err.message);
-    await irAInicio();
+    mostrarError(err);
   } finally {
     identificando = false;
   }
@@ -379,6 +396,7 @@ $('#btn-camara').addEventListener('click', () => pedirFoto('camara'));
 $('#btn-galeria').addEventListener('click', () => pedirFoto('galeria'));
 $('#btn-ajustes').addEventListener('click', abrirAjustes);
 $('#btn-atras').addEventListener('click', irAInicio);
+$('#btn-error-volver').addEventListener('click', irAInicio);
 
 for (const entrada of [$('#entrada-camara'), $('#entrada-galeria')]) {
   entrada.addEventListener('change', (e) => {

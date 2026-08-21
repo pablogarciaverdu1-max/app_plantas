@@ -24,7 +24,20 @@ export async function identificar({ apiKey, blob, proyecto = 'all' }) {
   try {
     respuesta = await fetch(url, { method: 'POST', body: formulario });
   } catch {
-    throw new Error('Sin conexión. Comprueba tu red.');
+    // fetch solo rechaza por dos motivos: no hay red, o el navegador ha
+    // bloqueado la petición por CORS. Distinguirlos importa, porque el segundo
+    // caso tiene una causa concreta y una solución concreta.
+    if (navigator.onLine === false) {
+      throw new Error('Sin conexión. Comprueba tu red y vuelve a intentarlo.');
+    }
+    const err = new Error(
+      'El navegador ha bloqueado la petición a Pl@ntNet, y eso casi siempre significa que falta autorizar este dominio.\n\n' +
+      'Entra en my.plantnet.org, abre la configuración de tu clave, marca «expose my API key» y añade este dominio en «Authorized domains»:'
+    );
+    err.dominio = location.hostname;
+    err.nota = 'Va sin «https://» y sin barra al final. Cuando lo guardes, recarga la app.';
+    err.ayuda = 'https://my.plantnet.org/';
+    throw err;
   }
 
   if (!respuesta.ok) throw new Error(await mensajeDeError(respuesta));

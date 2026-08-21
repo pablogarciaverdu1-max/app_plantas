@@ -426,3 +426,33 @@ input, textarea { font: inherit; color: inherit; }
 
 /* La pastilla de la rejilla ahora indica el riego, no la salud. */
 .planta-card .pastilla { font-size: 11.5px; }
+
+/* ---------- Pantalla de error ---------- */
+
+.emoji-grande { font-size: 44px; }
+.error-texto {
+  white-space: pre-line;   /* el mensaje trae saltos de línea a propósito */
+  text-align: left;
+  max-width: 34ch;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--texto);
+}
+#v-error .cargando { gap: 16px; }
+#v-error .boton-secundario { max-width: 280px; }
+
+.dominio-destacado {
+  display: block;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--verde-tenue);
+  border: 1px dashed var(--verde);
+  color: var(--verde);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 15px;
+  font-weight: 600;
+  word-break: break-all;
+  user-select: all;          /* un toque lo selecciona entero para copiarlo */
+  -webkit-user-select: all;
+}
+.error-nota { font-size: 13px; color: var(--texto-2); max-width: 34ch; line-height: 1.5; }
