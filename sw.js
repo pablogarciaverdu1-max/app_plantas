@@ -1,7 +1,7 @@
 // Service worker: guarda el esqueleto de la app para que abra sin conexión.
 // Las llamadas a Pl@ntNet y a Wikipedia siempre van a la red (nunca se cachean).
 
-const CACHE = 'verdin-v3';
+const CACHE = 'verdin-v4';
 
 const ESQUELETO = [
   './',

@@ -386,7 +386,7 @@ function abrirAjustes() {
   $('#in-key').value = ajustes.plantnetKey;
   // Pl@ntNet exige autorizar el dominio desde el que se llama, así que se lo
   // enseñamos ya escrito en vez de que tenga que adivinarlo.
-  $('#dominio-actual').textContent = location.hostname || '(abierta como archivo local)';
+  $('#dominio-actual').textContent = location.origin || '(abierta como archivo local)';
   mostrar('ajustes', { titulo: 'Ajustes', atras: true });
 }
 

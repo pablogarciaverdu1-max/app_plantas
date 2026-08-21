@@ -55,9 +55,11 @@ Es gratuita y no piden tarjeta. Una vez:
 1. Regístrate en [my.plantnet.org](https://my.plantnet.org/).
 2. Copia tu clave de API.
 3. **Importante:** en la configuración de la clave, marca *«expose my API key»* y
-   añade el dominio de tu app en *«Authorized domains»* (algo como
-   `tuusuario.github.io`). Sin esto el navegador bloquea las peticiones por CORS.
-   La app te enseña el dominio exacto en su pantalla de Ajustes.
+   añade en *«Authorized domains»* el origen completo de tu app, **con el
+   protocolo y sin barra final** (por ejemplo `https://tuusuario.github.io`).
+   Pl@ntNet lo compara con la cabecera `Origin` del navegador, que siempre lleva
+   el esquema, así que el nombre de dominio a secas no vale. La app te enseña el
+   valor exacto en su pantalla de Ajustes.
 4. Pega la clave en **Ajustes** dentro de la app.
 
 ## Privacidad

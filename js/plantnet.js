@@ -34,8 +34,8 @@ export async function identificar({ apiKey, blob, proyecto = 'all' }) {
       'El navegador ha bloqueado la petición a Pl@ntNet, y eso casi siempre significa que falta autorizar este dominio.\n\n' +
       'Entra en my.plantnet.org, abre la configuración de tu clave, marca «expose my API key» y añade este dominio en «Authorized domains»:'
     );
-    err.dominio = location.hostname;
-    err.nota = 'Va sin «https://» y sin barra al final. Cuando lo guardes, recarga la app.';
+    err.dominio = location.origin;
+    err.nota = 'Cópialo tal cual, con el «https://» y sin barra al final: Pl@ntNet lo compara con la cabecera Origin del navegador. Dale a «Update key settings» y recarga la app.';
     err.ayuda = 'https://my.plantnet.org/';
     throw err;
   }
