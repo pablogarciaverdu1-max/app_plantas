@@ -1,0 +1,9 @@
+{
+  "name": "Chef IA - Recetas personalizadas",
+  "short_name": "Chef IA",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#e8590c",
+  "description": "Sugerencias de platos principales personalizadas para tu día y tu entrenamiento."
+}

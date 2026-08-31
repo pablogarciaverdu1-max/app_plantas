@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#e8590c">
+    <link rel="manifest" href="manifest.json">
+    <title>🍳 Chef IA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary: #e8590c;
+            --primary-soft: #fff1e8;
+            --success: #2f9e44;
+            --danger: #e03131;
+            --bg: #ffffff;
+            --surface: #faf8f6;
+            --border: #eae3dd;
+            --text: #1a1a1a;
+            --text-secondary: #6b6b6b;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: calc(env(safe-area-inset-top) + 14px) 16px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-title {
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .header-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+            text-transform: capitalize;
+        }
+
+        .icon-btn {
+            border: 1px solid var(--border);
+            background: #fff;
+            border-radius: 10px;
+            width: 38px;
+            height: 38px;
+            font-size: 17px;
+            cursor: pointer;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px 16px 24px;
+        }
+
+        .segmented {
+            display: flex;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 12px;
+        }
+
+        .segmented button {
+            flex: 1;
+            border: none;
+            background: transparent;
+            border-radius: 9px;
+            padding: 9px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .segmented button.active {
+            background: #fff;
+            color: var(--primary);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .1);
+        }
+
+        .notas {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 15px;
+            font-family: inherit;
+            background: var(--surface);
+            margin-bottom: 14px;
+        }
+
+        .notas:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+
+        .btn {
+            width: 100%;
+            border: none;
+            border-radius: 14px;
+            padding: 17px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: inherit;
+            color: #fff;
+            background: var(--primary);
+            cursor: pointer;
+        }
+
+        .btn:active { transform: scale(.985); }
+        .btn:disabled { opacity: .55; cursor: default; }
+
+        .btn-ghost {
+            background: #fff;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .card {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            margin-top: 18px;
+            background: #fff;
+        }
+
+        .plato-nombre {
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1.25;
+        }
+
+        .plato-porque {
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 12px;
+            background: var(--primary-soft);
+            color: #9a3d05;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .bloque-titulo {
+            margin: 20px 0 10px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .ingredientes { list-style: none; }
+
+        .ingredientes li {
+            display: flex;
+            gap: 10px;
+            padding: 9px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+            line-height: 1.4;
+        }
+
+        .ingredientes li:last-child { border-bottom: none; }
+        .ingredientes li::before { content: '•'; color: var(--primary); font-weight: 700; }
+
+        .pasos { list-style: none; counter-reset: paso; }
+
+        .pasos li {
+            counter-increment: paso;
+            display: flex;
+            gap: 12px;
+            padding: 11px 0;
+            font-size: 15px;
+            line-height: 1.55;
+        }
+
+        .pasos li::before {
+            content: counter(paso);
+            flex: 0 0 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .acciones {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .acciones .btn { padding: 14px; font-size: 15px; }
+
+        .estado {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text-secondary);
+        }
+
+        .estado-icono { font-size: 46px; margin-bottom: 12px; }
+        .estado-titulo { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+        .estado-texto { font-size: 14px; line-height: 1.5; }
+
+        .spinner {
+            width: 34px;
+            height: 34px;
+            margin: 0 auto 14px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: girar .8s linear infinite;
+        }
+
+        @keyframes girar { to { transform: rotate(360deg); } }
+
+        .error {
+            border: 1px solid #ffc9c9;
+            background: #fff5f5;
+            color: var(--danger);
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 14px;
+            margin-top: 16px;
+            line-height: 1.5;
+        }
+
+        .historial-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+        }
+
+        .historial-item:last-child { border-bottom: none; }
+        .historial-meta { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+        .oculto { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div>
+                <div class="header-title">🍳 Chef IA</div>
+                <div class="header-sub" id="cabecera-contexto">Cargando…</div>
+            </div>
+            <button class="icon-btn" id="btn-historial" title="Historial">🕘</button>
+        </div>
+
+        <!-- PANTALLA PRINCIPAL -->
+        <div class="content" id="pantalla-principal">
+            <div class="segmented">
+                <button data-momento="comida" class="active">🥗 Comida</button>
+                <button data-momento="cena">🌙 Cena</button>
+            </div>
+
+            <input class="notas" id="notas" maxlength="140"
+                   placeholder="¿Algo en mente? (opcional: «pescado», «con arroz»…)">
+
+            <button class="btn" id="btn-generar">✨ Dame una idea para comer hoy</button>
+
+            <div id="salida">
+                <div class="estado">
+                    <div class="estado-icono">🍽️</div>
+                    <div class="estado-titulo">Sin ideas todavía</div>
+                    <div class="estado-texto">Pulsa el botón y te propongo un plato principal para hoy.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA HISTORIAL -->
+        <div class="content oculto" id="pantalla-historial">
+            <button class="btn btn-ghost" id="btn-volver" style="margin-bottom:16px;">← Volver</button>
+            <div id="lista-historial"></div>
+        </div>
+    </div>
+
+    <script>
+        const CLAVE_HISTORIAL = 'chefIaHistorial';
+        const MAX_HISTORIAL = 20;
+
+        let momento = 'comida';
+        let cargando = false;
+
+        const $ = (id) => document.getElementById(id);
+
+        // ========== HISTORIAL (localStorage) ==========
+        function leerHistorial() {
+            try {
+                return JSON.parse(localStorage.getItem(CLAVE_HISTORIAL)) || [];
+            } catch {
+                return [];
+            }
+        }
+
+        function guardarEnHistorial(receta, contexto) {
+            const historial = leerHistorial();
+            historial.unshift({
+                nombre: receta.nombre,
+                momento: contexto.momento,
+                dia: contexto.diaSemana,
+                fecha: new Date().toISOString(),
+                receta,
+            });
+            localStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(historial.slice(0, MAX_HISTORIAL)));
+        }
+
+        // ========== LLAMADA AL BACKEND ==========
+        async function pedirReceta() {
+            if (cargando) return;
+            cargando = true;
+            $('btn-generar').disabled = true;
+            $('salida').innerHTML =
+                '<div class="estado"><div class="spinner"></div>' +
+                '<div class="estado-titulo">Pensando tu plato…</div>' +
+                '<div class="estado-texto">Unos segundos.</div></div>';
+
+            try {
+                const respuesta = await fetch('/api/receta', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        momento,
+                        notas: $('notas').value,
+                        // Evita que repita lo de los últimos días.
+                        platosRecientes: leerHistorial().slice(0, 10).map((h) => h.nombre),
+                    }),
+                });
+
+                const datos = await respuesta.json();
+                if (!respuesta.ok) throw new Error(datos.error || 'Error del servidor');
+
+                guardarEnHistorial(datos.receta, datos.contexto);
+                pintarReceta(datos.receta);
+            } catch (error) {
+                $('salida').innerHTML = '<div class="error">⚠️ ' + escapar(error.message) + '</div>';
+            } finally {
+                cargando = false;
+                $('btn-generar').disabled = false;
+            }
+        }
+
+        // ========== RENDER ==========
+        function escapar(texto) {
+            const div = document.createElement('div');
+            div.textContent = texto;
+            return div.innerHTML;
+        }
+
+        function pintarReceta(receta) {
+            $('salida').innerHTML = `
+                <div class="card">
+                    <div class="plato-nombre">${escapar(receta.nombre)}</div>
+                    <div class="plato-porque">💡 ${escapar(receta.porQueEncajaHoy)}</div>
+
+                    <div class="bloque-titulo">Ingredientes</div>
+                    <ul class="ingredientes">
+                        ${receta.ingredientes.map((i) => `<li><span>${escapar(i)}</span></li>`).join('')}
+                    </ul>
+
+                    <div class="bloque-titulo">Paso a paso</div>
+                    <ol class="pasos">
+                        ${receta.pasos.map((p) => `<li><span>${escapar(p)}</span></li>`).join('')}
+                    </ol>
+
+                    <div class="acciones">
+                        <button class="btn btn-ghost" id="btn-compartir">📤 Compartir</button>
+                        <button class="btn" id="btn-otra">🔄 Otra idea</button>
+                    </div>
+                </div>`;
+
+            $('btn-otra').onclick = pedirReceta;
+            $('btn-compartir').onclick = () => compartir(receta);
+            $('salida').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function recetaComoTexto(receta) {
+            return [
+                receta.nombre,
+                '',
+                receta.porQueEncajaHoy,
+                '',
+                'INGREDIENTES',
+                ...receta.ingredientes.map((i) => '- ' + i),
+                '',
+                'PASO A PASO',
+                ...receta.pasos.map((p, n) => `${n + 1}. ${p}`),
+            ].join('\n');
+        }
+
+        async function compartir(receta) {
+            const texto = recetaComoTexto(receta);
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: receta.nombre, text: texto });
+                    return;
+                } catch {
+                    // El usuario canceló: caemos al portapapeles.
+                }
+            }
+            await navigator.clipboard.writeText(texto);
+            alert('Receta copiada al portapapeles');
+        }
+
+        function pintarHistorial() {
+            const historial = leerHistorial();
+            if (!historial.length) {
+                $('lista-historial').innerHTML =
+                    '<div class="estado"><div class="estado-icono">🕘</div>' +
+                    '<div class="estado-titulo">Historial vacío</div>' +
+                    '<div class="estado-texto">Aquí verás los platos que te he propuesto.</div></div>';
+                return;
+            }
+
+            $('lista-historial').innerHTML = historial.map((h, i) => `
+                <div class="historial-item" data-indice="${i}" style="cursor:pointer;">
+                    <span>${escapar(h.nombre)}</span>
+                    <span class="historial-meta">${escapar(h.dia)} · ${escapar(h.momento)}</span>
+                </div>`).join('');
+
+            for (const fila of document.querySelectorAll('.historial-item')) {
+                fila.onclick = () => {
+                    pintarReceta(historial[Number(fila.dataset.indice)].receta);
+                    mostrarPantalla('principal');
+                };
+            }
+        }
+
+        function mostrarPantalla(cual) {
+            $('pantalla-principal').classList.toggle('oculto', cual !== 'principal');
+            $('pantalla-historial').classList.toggle('oculto', cual !== 'historial');
+        }
+
+        // ========== ARRANQUE ==========
+        async function cargarContexto() {
+            try {
+                const ctx = await (await fetch('/api/contexto')).json();
+                momento = ctx.momentoSugerido;
+                $('cabecera-contexto').textContent =
+                    `${ctx.diaSemana} · ${ctx.esFinDeSemana ? 'fin de semana' : 'entre semana'}`;
+                for (const boton of document.querySelectorAll('.segmented button')) {
+                    boton.classList.toggle('active', boton.dataset.momento === momento);
+                }
+            } catch {
+                $('cabecera-contexto').textContent = 'Sin conexión con el servidor';
+            }
+        }
+
+        for (const boton of document.querySelectorAll('.segmented button')) {
+            boton.onclick = () => {
+                momento = boton.dataset.momento;
+                for (const otro of document.querySelectorAll('.segmented button')) {
+                    otro.classList.toggle('active', otro === boton);
+                }
+            };
+        }
+
+        $('btn-generar').onclick = pedirReceta;
+        $('btn-historial').onclick = () => { pintarHistorial(); mostrarPantalla('historial'); };
+        $('btn-volver').onclick = () => mostrarPantalla('principal');
+
+        cargarContexto();
+    </script>
+</body>
+</html>
