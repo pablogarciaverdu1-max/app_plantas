@@ -11,12 +11,13 @@ Vive en `recetas/` dentro de este repo; **no toca la app de plantas** de la raí
 
 ```
 ┌──────────────────────────┐        ┌──────────────────────────┐
-│  public/index.html       │        │  server.js (Express)     │
+│  public/index.html       │        │  server.js → src/app.js  │
 │  Web app móvil (PWA)     │ ─────► │  POST /api/receta        │
 │  · botón "Dame una idea" │  JSON  │  GET  /api/contexto      │
 │  · historial localStorage│ ◄───── │                          │
-└──────────────────────────┘        │  src/prompt.js  (prompt) │
-                                    │  src/chef.js    (Claude) │
+└──────────────────────────┘        │  src/prompt.js    prompt │
+                                    │  src/chef.js      Claude │
+                                    │  src/seguridad.js  token │
                                     └───────────┬──────────────┘
                                                 │  ANTHROPIC_API_KEY
                                                 ▼
@@ -47,6 +48,7 @@ cd recetas
 npm install
 cp .env.example .env      # y pega tu key de https://console.anthropic.com
 npm start                 # http://localhost:3000
+npm test                  # 20 tests, no gastan API
 ```
 
 Para abrirlo en el móvil dentro de tu wifi: mira tu IP local (`ipconfig getifaddr en0`
@@ -59,14 +61,18 @@ En Safari/Chrome → *Compartir* → *Añadir a pantalla de inicio* y queda como
 
 | Archivo | Qué hace |
 |---|---|
-| `package.json` | Dependencias (`@anthropic-ai/sdk`, `express`, `zod`, `dotenv`) y el script `npm start`. |
-| `.env` | Tu `ANTHROPIC_API_KEY`. **Está en `.gitignore`: nunca se sube.** |
+| `package.json` | Dependencias (`@anthropic-ai/sdk`, `express`, `zod`, `dotenv`) y los scripts `start` / `test`. |
+| `.env` | Tu `ANTHROPIC_API_KEY` y tu `APP_TOKEN`. **Está en `.gitignore`: nunca se sube.** |
 | `.env.example` | Plantilla del anterior, esta sí se sube. |
 | `src/prompt.js` | El System Prompt (perfil, reglas de negocio, formato) y el cálculo del contexto: qué día es y si toca comida o cena. |
 | `src/chef.js` | La llamada a Claude: esquema de salida + `messages.parse()`. |
-| `server.js` | Servidor Express: sirve el frontend y expone la API. Traduce errores del SDK a mensajes que la app puede enseñar. |
+| `src/seguridad.js` | Token de acceso y límite de peticiones. |
+| `src/app.js` | Las rutas de Express. Separado de `server.js` para poder testearlo sin abrir un puerto fijo ni gastar API. |
+| `server.js` | Arranque: lee el `.env` y se pone a escuchar. |
 | `public/index.html` | Toda la interfaz (HTML + CSS + JS en un archivo, igual que la app de plantas). |
 | `public/manifest.json` | Metadatos de PWA para que se instale con icono y a pantalla completa. |
+| `test/` | Tests con el runner de Node, sin dependencias. |
+| `Dockerfile` | Para desplegar. |
 
 ### `src/prompt.js`
 
@@ -104,12 +110,12 @@ const response = await client.messages.parse({
 - `effort: 'medium'` — sugerir un plato no requiere razonamiento profundo y sale
   más barato. Súbelo a `'high'` si quieres recetas más elaboradas.
 
-### `server.js`
+### `src/app.js`
 
 Dos endpoints:
 
-- `GET /api/contexto` → `{diaSemana, esFinDeSemana, momentoSugerido}`. La app lo
-  pide al abrir para preseleccionar comida/cena y pintar la cabecera.
+- `GET /api/contexto` → `{diaSemana, esFinDeSemana, momentoSugerido, necesitaToken}`.
+  La app lo pide al abrir para preseleccionar comida/cena y saber si debe pedir token.
 - `POST /api/receta` → recibe `{momento, notas, platosRecientes}` y devuelve
   `{receta, contexto}`.
 
@@ -129,15 +135,60 @@ Los errores se capturan por clase del SDK (`AuthenticationError`, `RateLimitErro
 
 ---
 
+## Seguridad
+
+Lo que protege esto no son tus datos: es **tu saldo de API**. Cada generación
+cuesta dinero, así que la preocupación real es que nadie más pulse el botón.
+
+**Token de acceso** (`APP_TOKEN` en el `.env`):
+
+- Si lo dejas **vacío**, la API queda abierta. Cómodo para tu red local.
+- Si lo **defines**, hace falta la cabecera `X-App-Token` en cada petición. La app
+  te lo pide una vez y lo guarda en `localStorage`.
+- **Es obligatorio antes de desplegar en internet.** Genéralo con
+  `openssl rand -hex 24`.
+- La comparación usa `crypto.timingSafeEqual`: un `===` normal corta en el primer
+  carácter distinto, y ese tiempo de respuesta permite adivinar el token letra a letra.
+
+**Límite de peticiones**: 20 recetas por hora y por IP. Sin esto, un bucle en el
+navegador o alguien que encuentre la URL podría lanzar cientos de generaciones. Es
+un contador en memoria, así que se reinicia con el servidor y no se comparte entre
+varias instancias — para un despliegue de un proceso, que es este caso, sobra.
+
+---
+
+## Tests
+
+```bash
+npm test
+```
+
+20 tests con el runner nativo de Node, cero dependencias, **cero coste**: el
+generador de recetas se inyecta simulado en `creaApp({ generador })`, así que las
+rutas se ejercitan sin llamar a Anthropic.
+
+Cubren el cálculo de día/momento (incluido el caso de un viernes 23:30 UTC que ya
+es sábado en Madrid), el recorte del historial, las rutas, el token y el limitador.
+
+---
+
+## Despliegue
+
+Con el `Dockerfile` incluido vale cualquier plataforma (Railway, Render, Fly.io):
+
+```bash
+docker build -t chef-ia .
+docker run -p 3000:3000 --env-file .env chef-ia
+```
+
+En la plataforma que elijas, define `ANTHROPIC_API_KEY` y `APP_TOKEN` como
+variables de entorno — **nunca en el repositorio**.
+
+---
+
 ## Siguientes pasos posibles
 
 1. **Streaming** — que la receta aparezca escribiéndose en lugar de esperar. Cambia
    `messages.parse` por `messages.stream`.
 2. **Lista de la compra** — sumar los ingredientes de varias recetas.
-3. **Despliegue** — Railway, Render o Fly.io. Sube el repo, define `ANTHROPIC_API_KEY`
-   como variable de entorno y ya tienes la app accesible desde cualquier sitio.
-4. **App nativa** — React Native (Expo) consumiendo esta misma API.
-
-> **Aviso**: la API no lleva autenticación. Está pensada para uso local o personal.
-> Antes de exponerla en internet, añade al menos un token de acceso y un límite de
-> peticiones, o cualquiera podría gastar tu saldo de API.
+3. **App nativa** — React Native (Expo) consumiendo esta misma API.

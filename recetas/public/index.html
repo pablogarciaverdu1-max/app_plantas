@@ -320,6 +320,7 @@
 
     <script>
         const CLAVE_HISTORIAL = 'chefIaHistorial';
+        const CLAVE_TOKEN = 'chefIaToken';
         const MAX_HISTORIAL = 20;
 
         let momento = 'comida';
@@ -348,6 +349,19 @@
             localStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(historial.slice(0, MAX_HISTORIAL)));
         }
 
+        // ========== TOKEN DE ACCESO ==========
+        // Solo entra en juego si el servidor tiene APP_TOKEN definido.
+        function pedirToken(motivo) {
+            const token = prompt(motivo || 'Introduce el token de acceso de la app:');
+            if (token) localStorage.setItem(CLAVE_TOKEN, token.trim());
+            return token;
+        }
+
+        function cabecerasAuth() {
+            const token = localStorage.getItem(CLAVE_TOKEN);
+            return token ? { 'X-App-Token': token } : {};
+        }
+
         // ========== LLAMADA AL BACKEND ==========
         async function pedirReceta() {
             if (cargando) return;
@@ -361,7 +375,7 @@
             try {
                 const respuesta = await fetch('/api/receta', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', ...cabecerasAuth() },
                     body: JSON.stringify({
                         momento,
                         notas: $('notas').value,
@@ -371,6 +385,11 @@
                 });
 
                 const datos = await respuesta.json();
+
+                if (respuesta.status === 401) {
+                    localStorage.removeItem(CLAVE_TOKEN);
+                    throw new Error('Token de acceso incorrecto. Recarga la app e introdúcelo de nuevo.');
+                }
                 if (!respuesta.ok) throw new Error(datos.error || 'Error del servidor');
 
                 guardarEnHistorial(datos.receta, datos.contexto);
@@ -478,6 +497,11 @@
         async function cargarContexto() {
             try {
                 const ctx = await (await fetch('/api/contexto')).json();
+
+                if (ctx.necesitaToken && !localStorage.getItem(CLAVE_TOKEN)) {
+                    pedirToken('Esta app pide token de acceso. Introdúcelo:');
+                }
+
                 momento = ctx.momentoSugerido;
                 $('cabecera-contexto').textContent =
                     `${ctx.diaSemana} · ${ctx.esFinDeSemana ? 'fin de semana' : 'entre semana'}`;
