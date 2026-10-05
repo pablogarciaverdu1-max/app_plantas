@@ -1,0 +1,30 @@
+[
+  {
+    "id": "berenjena",
+    "categoria": "Verdura",
+    "nombre": "Berenjena rellena",
+    "descripcion": "Tan rellena que no le cabe ni una excusa para pedir pizza.",
+    "foto": "/platos/berenjena.webp"
+  },
+  {
+    "id": "lasana",
+    "categoria": "Pasta",
+    "nombre": "Lasaña de ragú",
+    "descripcion": "Capas y capas de ragú: la única agenda apretada que te va a apetecer.",
+    "foto": "/platos/lasana.webp"
+  },
+  {
+    "id": "hamburguesa-pollo",
+    "categoria": "Pollo",
+    "nombre": "Hamburguesa de pollo con salteado de verduras",
+    "descripcion": "Sin remordimientos: las verduras ya vienen puestas.",
+    "foto": "/platos/hamburguesa-pollo.webp"
+  },
+  {
+    "id": "orecchiette",
+    "categoria": "Pasta",
+    "nombre": "Orecchiette de ternera y espárragos",
+    "descripcion": "Orejitas de pasta que escuchan tus penas de la semana.",
+    "foto": "/platos/orecchiette.webp"
+  }
+]
