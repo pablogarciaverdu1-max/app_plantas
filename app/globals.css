@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --color-noche: #14213d;
+  --color-noche-hover: #22335a;
+  --color-naranja: #ff9f1c;
+  --color-naranja-hover: #ffb24a;
+  --color-bruma: #eef1f8;
+  --color-linea: #dce1ec;
+  --color-tinta: #3a4560;
+  --color-gris: #4a5570;
+  --color-gris-claro: #5b6680;
+  --color-borde: #7c869c;
+
+  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+  --font-titulo: var(--font-bricolage), system-ui, sans-serif;
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-noche);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-naranja);
+  outline-offset: 3px;
+}
+
+/* En fondo naranja el foco naranja no se vería */
+.fondo-naranja :focus-visible {
+  outline-color: var(--color-noche);
+}
