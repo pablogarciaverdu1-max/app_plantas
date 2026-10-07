@@ -32,11 +32,13 @@ export class CameraRig {
     this.time += frameTime;
     this.feet.lerpVectors(player.previousPosition, player.position, alpha);
 
-    // Bob follows distance travelled, so it matches footsteps at any speed.
+    // One bob per footstep. Cadence rises with speed: ~2.1 steps/s walking,
+    // ~2.6 trotting, ~3.2 sprinting.
     const speed = player.onGround && !player.isMantling ? player.horizontalSpeed : 0;
-    this.bobPhase += speed * frameTime * (player.sprinting ? 1.25 : 1.5);
+    const cadence = 1.6 + speed * 0.3;
+    this.bobPhase += cadence * frameTime * Math.min(1, speed / 0.8);
     const targetAmount = Math.min(1, speed / 5.5);
-    this.bobAmount += (targetAmount - this.bobAmount) * Math.min(1, frameTime * 6);
+    this.bobAmount += (targetAmount - this.bobAmount) * Math.min(1, frameTime * 4);
 
     if (player.justLanded && player.lastLandingSpeed > 1.5) {
       this.dipVel -= Math.min(4, player.lastLandingSpeed * 0.6);
@@ -50,17 +52,19 @@ export class CameraRig {
 
     const breath = 0.004 + player.stamina.breathlessness * 0.012;
     const breathRate = 1.4 + player.stamina.breathlessness * 1.6;
-    const bobY = Math.abs(Math.sin(this.bobPhase * Math.PI)) * 0.045 * this.bobAmount;
-    const bobX = Math.sin(this.bobPhase * Math.PI) * 0.025 * this.bobAmount;
+    // Smooth rise and fall per step (no sharp cusp at foot strike); sideways sway
+    // has half the frequency because the body shifts over each foot in turn.
+    const bobY = (0.5 - 0.5 * Math.cos(this.bobPhase * 2 * Math.PI)) * 0.035 * this.bobAmount;
+    const bobX = Math.sin(this.bobPhase * Math.PI) * 0.018 * this.bobAmount;
 
     const right = new THREE.Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
     this.camera.position
       .copy(this.feet)
       .addScaledVector(right, player.leanOffset + bobX)
-      .setY(this.feet.y + this.smoothEye + bobY - 0.022 * this.bobAmount + Math.sin(this.time * breathRate) * breath + this.dip);
+      .setY(this.feet.y + this.smoothEye + bobY - 0.0175 * this.bobAmount + Math.sin(this.time * breathRate) * breath + this.dip);
 
     const roll = -player.lean * 20 * DEG * (player.leanOffset !== 0 ? Math.abs(player.leanOffset) / 0.35 : 0);
-    const bobRoll = Math.sin(this.bobPhase * Math.PI) * 0.6 * DEG * this.bobAmount;
+    const bobRoll = Math.sin(this.bobPhase * Math.PI) * 0.4 * DEG * this.bobAmount;
     const breathPitch = Math.sin(this.time * breathRate * 0.5) * breath * 0.25;
     this.camera.rotation.set(this.pitch + breathPitch, this.yaw, roll + bobRoll, 'YXZ');
   }

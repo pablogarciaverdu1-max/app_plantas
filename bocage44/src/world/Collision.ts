@@ -12,6 +12,8 @@ export interface Capsule {
 export interface CapsuleContact {
   /** Total push applied to resolve penetration. */
   push: THREE.Vector3;
+  /** Part of the push that came from walls and steep surfaces (not walkable ground). */
+  wallPush: THREE.Vector3;
   /** Steepest-to-flattest: the most upward-facing contact normal (y component), or -1 when nothing was touched. */
   groundNormalY: number;
 }
@@ -64,8 +66,8 @@ export class CollisionWorld {
    * Pushes the capsule out of any geometry it overlaps (modifies capsule in place).
    * Runs a few iterations so corners resolve cleanly.
    */
-  resolveCapsule(capsule: Capsule, iterations = 3): CapsuleContact {
-    const contact: CapsuleContact = { push: new THREE.Vector3(), groundNormalY: -1 };
+  resolveCapsule(capsule: Capsule, walkableNormalY = 0.8, iterations = 3): CapsuleContact {
+    const contact: CapsuleContact = { push: new THREE.Vector3(), wallPush: new THREE.Vector3(), groundNormalY: -1 };
     const startCopy = capsule.start.clone();
     for (let it = 0; it < iterations; it++) {
       let moved = false;
@@ -81,8 +83,17 @@ export class CollisionWorld {
           if (distance < capsule.radius && distance > 1e-6) {
             const depth = capsule.radius - distance;
             tmpDir.copy(tmpCapPoint).sub(tmpTriPoint).normalize();
-            tmpSeg.start.addScaledVector(tmpDir, depth);
-            tmpSeg.end.addScaledVector(tmpDir, depth);
+            if (tmpDir.y >= walkableNormalY) {
+              // Walkable ground only lifts the capsule: no sideways drift on slopes,
+              // no speed loss where the ground changes angle.
+              const lift = Math.min(depth / tmpDir.y, capsule.radius);
+              tmpSeg.start.y += lift;
+              tmpSeg.end.y += lift;
+            } else {
+              tmpSeg.start.addScaledVector(tmpDir, depth);
+              tmpSeg.end.addScaledVector(tmpDir, depth);
+              contact.wallPush.addScaledVector(tmpDir, depth);
+            }
             if (tmpDir.y > contact.groundNormalY) contact.groundNormalY = tmpDir.y;
             moved = true;
           }

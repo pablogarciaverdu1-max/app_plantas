@@ -170,7 +170,7 @@ export class PlayerController {
 
   private collide(): void {
     const cap = this.makeCapsule(this.position, this.height);
-    const contact = this.world.resolveCapsule(cap);
+    const contact = this.world.resolveCapsule(cap, WALKABLE_NORMAL_Y);
     this.position.set(cap.start.x, cap.start.y - cap.radius, cap.start.z);
     this.onGround = contact.groundNormalY >= WALKABLE_NORMAL_Y;
 
@@ -178,8 +178,8 @@ export class PlayerController {
     // Hit the ceiling.
     if (contact.push.y < -1e-4 && this.velocity.y > 0) this.velocity.y = 0;
     // Remove velocity into walls so the player slides along them.
-    const px = contact.push.x;
-    const pz = contact.push.z;
+    const px = contact.wallPush.x;
+    const pz = contact.wallPush.z;
     const pl = Math.hypot(px, pz);
     if (pl > 1e-5) {
       const nx = px / pl;
@@ -196,7 +196,7 @@ export class PlayerController {
     const saved = this.position.clone();
     this.position.y -= maxDrop;
     const cap = this.makeCapsule(this.position, this.height);
-    const contact = this.world.resolveCapsule(cap);
+    const contact = this.world.resolveCapsule(cap, WALKABLE_NORMAL_Y);
     if (contact.groundNormalY >= WALKABLE_NORMAL_Y && contact.push.y > 0) {
       this.position.set(cap.start.x, cap.start.y - cap.radius, cap.start.z);
       this.onGround = true;
