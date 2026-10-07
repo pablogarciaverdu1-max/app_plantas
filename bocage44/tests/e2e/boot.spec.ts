@@ -36,3 +36,17 @@ test('renders a lit scene, not a blank canvas', async ({ page }) => {
   // A uniform image compresses to almost nothing; a textured scene does not.
   expect(shot.byteLength).toBeGreaterThan(30_000);
 });
+
+test('after the start click the player moves forward with W', async ({ page }) => {
+  await page.goto(`${gameUrl}?test=1`);
+  await page.waitForFunction(() => (window as unknown as { __game?: { fps: number } }).__game?.fps! > 0, null, { timeout: 30_000 });
+  await page.click('.overlay');
+  const before = await page.evaluate(() => (window as unknown as { __game: { playerPosition(): number[] } }).__game.playerPosition());
+  await page.keyboard.down('KeyW');
+  await page.waitForTimeout(1500);
+  await page.keyboard.up('KeyW');
+  const after = await page.evaluate(() => (window as unknown as { __game: { playerPosition(): number[] } }).__game.playerPosition());
+  // Facing -Z at the start. Software rendering on CI runs few frames per second and
+  // each frame advances at most 0.25 s of simulation, so only a modest distance is required.
+  expect(before[2] - after[2]).toBeGreaterThan(0.2);
+});

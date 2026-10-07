@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createMeadowTextures, createWeatheredWoodTextures, type PbrTextures } from './ProceduralTextures';
+import { createMeadowTextures, createStoneTextures, createWeatheredWoodTextures, type PbrTextures } from './ProceduralTextures';
 
 function applyRepeat(set: PbrTextures, repeatX: number, repeatY = repeatX): void {
   for (const tex of [set.map, set.normalMap, set.roughnessMap, set.aoMap]) tex.repeat.set(repeatX, repeatY);
@@ -28,6 +28,20 @@ export function createWoodMaterial(): THREE.MeshStandardMaterial {
     normalMap: woodTextures.normalMap,
     roughnessMap: woodTextures.roughnessMap,
     aoMap: woodTextures.aoMap,
+    metalness: 0,
+  });
+}
+
+let stoneTextures: PbrTextures | undefined;
+
+/** Box UVs are scaled to metres; the stone tile covers 2 m. */
+export function createStoneMaterial(): THREE.MeshStandardMaterial {
+  stoneTextures ??= createStoneTextures();
+  return new THREE.MeshStandardMaterial({
+    map: stoneTextures.map,
+    normalMap: stoneTextures.normalMap,
+    roughnessMap: stoneTextures.roughnessMap,
+    aoMap: stoneTextures.aoMap,
     metalness: 0,
   });
 }

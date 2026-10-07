@@ -1,13 +1,19 @@
 import * as THREE from 'three';
 import { Terrain, terrainHeight } from './Terrain';
+import { buildTestRange } from './TestRange';
 import { createWoodMaterial } from '../render/Materials';
 
 /**
- * Phase 0 test scene: open ground plus a line of fence posts at known distances
- * (every 10 m out to 150 m) so fog visibility can be judged by eye.
+ * Test scene: open ground, the phase 1 movement course, and a line of fence posts
+ * at known distances (every 10 m out to 150 m) so fog visibility can be judged by eye.
+ * Returns the group of solid level geometry.
  */
-export function buildTestScene(scene: THREE.Scene): void {
-  scene.add(new Terrain().mesh);
+export function buildTestScene(scene: THREE.Scene): THREE.Group {
+  const level = new THREE.Group();
+  level.name = 'level';
+  scene.add(level);
+  level.add(new Terrain().mesh);
+  level.add(buildTestRange());
 
   const postGeometry = new THREE.CylinderGeometry(0.06, 0.075, 1.3, 10, 1);
   postGeometry.translate(0, 0.65, 0);
@@ -21,7 +27,7 @@ export function buildTestScene(scene: THREE.Scene): void {
   const m = new THREE.Matrix4();
   const q = new THREE.Quaternion();
   const s = new THREE.Vector3(1, 1, 1);
-  const x = 3;
+  const x = 16;
   let rail = 0;
   for (let i = 0; i < 16; i++) {
     const z = -i * 10;
@@ -41,6 +47,7 @@ export function buildTestScene(scene: THREE.Scene): void {
   for (const mesh of [posts, rails]) {
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    scene.add(mesh);
+    level.add(mesh);
   }
+  return level;
 }

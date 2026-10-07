@@ -155,3 +155,73 @@ export function createWeatheredWoodTextures(size = 256): PbrTextures {
     aoMap: toTexture(cAo, false),
   };
 }
+
+/** Pale Norman limestone in roughly coursed blocks with recessed mortar joints and damp staining. */
+export function createStoneTextures(size = 512): PbrTextures {
+  const [cAlbedo, xAlbedo, dAlbedo] = makeCanvas(size);
+  const [cRough, xRough, dRough] = makeCanvas(size);
+  const [cNorm, xNorm, dNorm] = makeCanvas(size);
+  const [cAo, xAo, dAo] = makeCanvas(size);
+  const height = new Float32Array(size * size);
+  const rows = 6; // courses per tile (tile = 2 m, so ~33 cm courses)
+  const rowH = size / rows;
+  for (let y = 0; y < size; y++) {
+    const row = Math.floor(y / rowH);
+    const inRowY = (y % rowH) / rowH;
+    const blocksInRow = 3 + (row % 2);
+    const offset = (row * 0.37) % 1;
+    for (let x = 0; x < size; x++) {
+      const u = x / size;
+      const bu = (u + offset) * blocksInRow;
+      const block = Math.floor(bu) % blocksInRow;
+      const inBlockX = bu - Math.floor(bu);
+      // Distance to the nearest joint, with a little wobble so blocks are not perfect rectangles.
+      const wob = (valueNoise(u * 40, y / 20, 3, 40) - 0.5) * 0.03;
+      const edge = Math.min(inRowY + wob, 1 - inRowY - wob, (inBlockX + wob) * (rowH * blocksInRow) / size * rows, (1 - inBlockX - wob) * (rowH * blocksInRow) / size * rows);
+      const joint = edge < 0.05 ? 1 - edge / 0.05 : 0;
+      const pit = valueNoise(u * 64, (y / size) * 64, 7, 64);
+      const tone = valueNoise(block * 3.1 + row * 7.7, 0.5, 19) * 0.25;
+      const h = (1 - joint) * (0.75 + pit * 0.25) - joint * 0.2;
+      const i = y * size + x;
+      height[i] = h;
+      const damp = Math.pow(fbm(u * 3, (y / size) * 3, 3, 23, 3), 2) * 0.5;
+      const base = joint > 0 ? 120 : 166 + (tone - 0.12) * 120 + (pit - 0.5) * 22;
+      const k = 1 - damp * 0.5;
+      const p = i * 4;
+      dAlbedo.data[p] = clampByte(base * k);
+      dAlbedo.data[p + 1] = clampByte(base * 0.935 * k);
+      dAlbedo.data[p + 2] = clampByte(base * 0.81 * k);
+      dAlbedo.data[p + 3] = 255;
+      dRough.data[p] = dRough.data[p + 1] = dRough.data[p + 2] = 215 + pit * 35 - damp * 40;
+      dRough.data[p + 3] = 255;
+      dAo.data[p] = dAo.data[p + 1] = dAo.data[p + 2] = 255 * (0.6 + 0.4 * (1 - joint));
+      dAo.data[p + 3] = 255;
+    }
+  }
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const l = height[y * size + ((x - 1 + size) % size)];
+      const r = height[y * size + ((x + 1) % size)];
+      const t = height[((y - 1 + size) % size) * size + x];
+      const b = height[((y + 1) % size) * size + x];
+      const nx = (l - r) * 3;
+      const ny = (t - b) * 3;
+      const len = Math.hypot(nx, ny, 1);
+      const p = (y * size + x) * 4;
+      dNorm.data[p] = ((nx / len) * 0.5 + 0.5) * 255;
+      dNorm.data[p + 1] = ((ny / len) * 0.5 + 0.5) * 255;
+      dNorm.data[p + 2] = ((1 / len) * 0.5 + 0.5) * 255;
+      dNorm.data[p + 3] = 255;
+    }
+  }
+  xAlbedo.putImageData(dAlbedo, 0, 0);
+  xRough.putImageData(dRough, 0, 0);
+  xNorm.putImageData(dNorm, 0, 0);
+  xAo.putImageData(dAo, 0, 0);
+  return {
+    map: toTexture(cAlbedo, true),
+    normalMap: toTexture(cNorm, false),
+    roughnessMap: toTexture(cRough, false),
+    aoMap: toTexture(cAo, false),
+  };
+}

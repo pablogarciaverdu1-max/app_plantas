@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { Game } from './core/Game';
 import { t } from './ui/Localization';
 
@@ -35,5 +36,11 @@ if (new URLSearchParams(location.search).get('test') === '1') {
     stepFrames: (seconds: number) => game.stepFrames(seconds),
     hideOverlay: () => overlay.classList.add('hidden'),
     cameraPosition: () => game.camera.position.toArray(),
+    playerPosition: () => game.player.position.toArray(),
+    playerStance: () => game.player.stance,
+    teleport: (x: number, y: number, z: number, yaw = 0) => {
+      game.player.teleport(new THREE.Vector3(x, y, z));
+      game.rig.yaw = yaw;
+    },
   };
 }

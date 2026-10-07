@@ -5,10 +5,12 @@ import { createRenderer } from '../render/Renderer';
 import { installHeightFog } from '../render/HeightFog';
 import { Sky } from '../world/Sky';
 import { buildTestScene } from '../world/LevelBuilder';
-import { terrainHeight } from '../world/Terrain';
+import { CollisionWorld } from '../world/Collision';
+import { PlayerController } from '../player/PlayerController';
+import { PlayerInput } from '../player/PlayerInput';
+import { CameraRig } from '../player/CameraRig';
 import { lightingAt, fogDensityForVisibility, type LightingState } from '../mission/TimeOfDay';
 
-const EYE_HEIGHT = 1.75;
 const DEG = Math.PI / 180;
 
 export class Game {
@@ -25,8 +27,9 @@ export class Game {
   private readonly sunDir = new THREE.Vector3(0, 1, 0);
   private readonly envScene = new THREE.Scene();
   private envTarget: THREE.WebGLRenderTarget | null = null;
-  private yaw = 0;
-  private pitch = 0;
+  readonly player: PlayerController;
+  readonly rig: CameraRig;
+  private readonly playerInput: PlayerInput;
   private progress = 0;
   private lastFrame = performance.now();
   private fpsFrames = 0;
@@ -56,13 +59,17 @@ export class Game {
     // Shares the sky material, so it always matches the visible sky.
     this.envScene.add(this.sky.mesh.clone());
 
-    buildTestScene(this.scene);
-    this.camera.position.set(0, terrainHeight(0, 6) + EYE_HEIGHT, 6);
+    const level = buildTestScene(this.scene);
+    const collision = CollisionWorld.fromObject(level);
+    this.player = new PlayerController(collision);
+    this.player.teleport(new THREE.Vector3(0, 0.5, 4));
+    this.rig = new CameraRig(this.camera);
+    this.playerInput = new PlayerInput(this.input);
     this.setTimeOfDay(0);
 
     this.loop = new GameLoop({
       step: (dt) => this.step(dt),
-      render: (_alpha, frameTime) => this.render(frameTime),
+      render: (alpha, frameTime) => this.render(alpha, frameTime),
     });
 
     window.addEventListener('resize', () => this.onResize(container));
@@ -127,19 +134,15 @@ export class Game {
   }
 
   private step(dt: number): void {
-    // Subtle breathing so the static view never feels frozen.
-    const t = this.loop.time + dt;
-    this.camera.position.y = terrainHeight(this.camera.position.x, this.camera.position.z) + EYE_HEIGHT + Math.sin(t * 1.6) * 0.004;
+    this.player.step(dt, this.playerInput.read(this.rig.yaw));
   }
 
-  private render(frameTime: number): void {
+  private render(alpha: number, frameTime: number): void {
     // Mouse look is applied every rendered frame, not every simulation step,
     // so turning stays smooth on 120/144 Hz screens.
     const [dx, dy] = this.input.consumeMouse();
-    const sensitivity = 0.0022;
-    this.yaw -= dx * sensitivity;
-    this.pitch = Math.min(1.5, Math.max(-1.5, this.pitch - dy * sensitivity));
-    this.camera.rotation.set(this.pitch, this.yaw, 0, 'YXZ');
+    this.rig.look(dx, dy, this.player);
+    this.rig.update(frameTime, alpha, this.player);
     this.sky.update(this.loop.time, this.camera.position);
     this.sun.target.position.copy(this.camera.position);
     // The shadow frustum follows the viewer.
