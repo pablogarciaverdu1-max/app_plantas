@@ -43,10 +43,14 @@ test('after the start click the player moves forward with W', async ({ page }) =
   await page.click('.overlay');
   const before = await page.evaluate(() => (window as unknown as { __game: { playerPosition(): number[] } }).__game.playerPosition());
   await page.keyboard.down('KeyW');
-  await page.waitForTimeout(1500);
+  // Frames are slow on the CPU renderer of the test machine: wait for movement rather than a fixed time.
+  await page.waitForFunction(
+    (z0) => z0 - (window as unknown as { __game: { playerPosition(): number[] } }).__game.playerPosition()[2] > 0.5,
+    before[2],
+    { timeout: 60_000 },
+  );
   await page.keyboard.up('KeyW');
   const after = await page.evaluate(() => (window as unknown as { __game: { playerPosition(): number[] } }).__game.playerPosition());
-  // Facing -Z at the start. Software rendering on CI runs few frames per second and
-  // each frame advances at most 0.25 s of simulation, so only a modest distance is required.
-  expect(before[2] - after[2]).toBeGreaterThan(0.2);
+  // Facing -Z at the start.
+  expect(before[2] - after[2]).toBeGreaterThan(0.5);
 });

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { Surface } from '../damage/SurfaceMaterial';
 
 /** Vertical capsule: a segment from `start` (bottom sphere centre) to `end` (top sphere centre). */
 export interface Capsule {
@@ -30,17 +31,29 @@ const tmpRay = new THREE.Ray();
  * Static level collision: every mesh flagged as solid is merged into one BVH.
  * Capsule resolution follows the three-mesh-bvh character controller approach.
  */
+export interface RayHit {
+  distance: number;
+  point: THREE.Vector3;
+  normal: THREE.Vector3;
+  surface: Surface;
+}
+
 export class CollisionWorld {
   readonly bvh: MeshBVH;
 
-  constructor(geometry: THREE.BufferGeometry) {
+  /** `surfaces[t]` is the surface of original triangle t (non-indexed order). */
+  constructor(geometry: THREE.BufferGeometry, private readonly surfaces: Uint8Array = new Uint8Array(0)) {
     this.bvh = new MeshBVH(geometry);
   }
 
-  /** Builds the collider from all meshes in `root` except those with `userData.noCollision`. */
+  /**
+   * Builds the collider from all meshes in `root` except those with `userData.noCollision`.
+   * `userData.surface` (a Surface) tags what bullets meet; default is earth.
+   */
   static fromObject(root: THREE.Object3D): CollisionWorld {
     root.updateMatrixWorld(true);
     const parts: THREE.BufferGeometry[] = [];
+    const surfaceRuns: [number, number][] = [];
     root.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
       if (!mesh.isMesh || mesh.userData.noCollision) return;
@@ -49,17 +62,35 @@ export class CollisionWorld {
       base.setAttribute('position', src.attributes.position.clone());
       if (src.index) base.setIndex(src.index.clone());
       const flat = base.index ? base.toNonIndexed() : base;
+      const surface = (mesh.userData.surface as Surface | undefined) ?? Surface.Earth;
+      const tris = flat.attributes.position.count / 3;
       const inst = mesh as THREE.InstancedMesh;
       if (inst.isInstancedMesh) {
         for (let i = 0; i < inst.count; i++) {
           inst.getMatrixAt(i, tmpMat);
           parts.push(flat.clone().applyMatrix4(tmpMat.premultiply(mesh.matrixWorld)));
+          surfaceRuns.push([tris, surface]);
         }
       } else {
         parts.push(flat.applyMatrix4(mesh.matrixWorld));
+        surfaceRuns.push([tris, surface]);
       }
     });
-    return new CollisionWorld(mergeGeometries(parts, false));
+    const total = surfaceRuns.reduce((n, [t]) => n + t, 0);
+    const surfaces = new Uint8Array(total);
+    let o = 0;
+    for (const [t, s] of surfaceRuns) {
+      surfaces.fill(s, o, o + t);
+      o += t;
+    }
+    return new CollisionWorld(mergeGeometries(parts, false), surfaces);
+  }
+
+  /** Surface of a triangle as reported by a BVH raycast (`faceIndex`). */
+  surfaceOf(faceIndex: number): Surface {
+    const index = this.bvh.geometry.index;
+    const vertex = index ? index.getX(faceIndex * 3) : faceIndex * 3;
+    return (this.surfaces[Math.floor(vertex / 3)] ?? Surface.Earth) as Surface;
   }
 
   /**
@@ -126,12 +157,19 @@ export class CollisionWorld {
     return !hit;
   }
 
-  /** Distance to the first surface along a ray, or Infinity. */
-  raycast(origin: THREE.Vector3, direction: THREE.Vector3, far: number): { distance: number; point: THREE.Vector3; normal: THREE.Vector3 } | null {
+  /** First surface along a ray within `far` metres, or null. Faces are hit from both sides. */
+  raycast(origin: THREE.Vector3, direction: THREE.Vector3, far: number): RayHit | null {
     tmpRay.origin.copy(origin);
     tmpRay.direction.copy(direction).normalize();
     const hit = this.bvh.raycastFirst(tmpRay, THREE.DoubleSide, 0, far);
     if (!hit || !hit.face) return null;
-    return { distance: hit.distance, point: hit.point.clone(), normal: hit.face.normal.clone() };
+    return { distance: hit.distance, point: hit.point.clone(), normal: hit.face.normal.clone(), surface: this.surfaceOf(hit.faceIndex ?? 0) };
+  }
+
+  /** True if nothing solid lies between two points. */
+  lineOfSight(from: THREE.Vector3, to: THREE.Vector3): boolean {
+    tmpDir.copy(to).sub(from);
+    const d = tmpDir.length();
+    return d < 1e-3 || this.raycast(from, tmpDir, d - 0.05) === null;
   }
 }

@@ -3,6 +3,9 @@ export class Input {
   private readonly keys = new Set<string>();
   private readonly pressed = new Set<string>();
   private mouseDX = 0;
+  private wheel = 0;
+  mouseLeft = false;
+  mouseRight = false;
   private mouseDY = 0;
 
   constructor(private readonly element: HTMLElement) {
@@ -14,6 +17,22 @@ export class Input {
     });
     window.addEventListener('keyup', (e) => this.keys.delete(e.code));
     window.addEventListener('blur', () => this.keys.clear());
+    document.addEventListener('mousedown', (e) => {
+      if (!this.locked) return;
+      if (e.button === 0) this.mouseLeft = true;
+      if (e.button === 2) this.mouseRight = true;
+    });
+    document.addEventListener('mouseup', (e) => {
+      if (e.button === 0) this.mouseLeft = false;
+      if (e.button === 2) this.mouseRight = false;
+    });
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    document.addEventListener('wheel', (e) => {
+      if (this.locked) this.wheel += Math.sign(e.deltaY);
+    });
+    document.addEventListener('pointerlockchange', () => {
+      if (!this.locked) this.mouseLeft = this.mouseRight = false;
+    });
     document.addEventListener('mousemove', (e) => {
       if (!this.locked) return;
       this.mouseDX += e.movementX;
@@ -43,6 +62,13 @@ export class Input {
   /** Drops queued presses (e.g. while the game is paused). */
   clearPressed(): void {
     this.pressed.clear();
+  }
+
+  /** Returns and clears the wheel steps since the last call. */
+  consumeWheel(): number {
+    const w = this.wheel;
+    this.wheel = 0;
+    return w;
   }
 
   /** Returns and clears the mouse movement accumulated since the last call. */

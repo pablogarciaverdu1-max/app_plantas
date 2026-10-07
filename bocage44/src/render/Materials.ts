@@ -5,7 +5,11 @@ function applyRepeat(set: PbrTextures, repeatX: number, repeatY = repeatX): void
   for (const tex of [set.map, set.normalMap, set.roughnessMap, set.aoMap]) tex.repeat.set(repeatX, repeatY);
 }
 
+/** Outside a browser (unit tests) there is no canvas to paint textures on. */
+const headless = typeof document === 'undefined';
+
 export function createGroundMaterial(repeat: number): THREE.MeshStandardMaterial {
+  if (headless) return new THREE.MeshStandardMaterial();
   const tex = createMeadowTextures();
   applyRepeat(tex, repeat);
   return new THREE.MeshStandardMaterial({
@@ -22,6 +26,7 @@ export function createGroundMaterial(repeat: number): THREE.MeshStandardMaterial
 let woodTextures: PbrTextures | undefined;
 
 export function createWoodMaterial(): THREE.MeshStandardMaterial {
+  if (headless) return new THREE.MeshStandardMaterial();
   woodTextures ??= createWeatheredWoodTextures();
   return new THREE.MeshStandardMaterial({
     map: woodTextures.map,
@@ -36,6 +41,7 @@ let stoneTextures: PbrTextures | undefined;
 
 /** Box UVs are scaled to metres; the stone tile covers 2 m. */
 export function createStoneMaterial(): THREE.MeshStandardMaterial {
+  if (headless) return new THREE.MeshStandardMaterial();
   stoneTextures ??= createStoneTextures();
   return new THREE.MeshStandardMaterial({
     map: stoneTextures.map,

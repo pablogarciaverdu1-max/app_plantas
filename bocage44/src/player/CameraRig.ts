@@ -19,7 +19,7 @@ export class CameraRig {
   private smoothEye = 1.62;
   private readonly feet = new THREE.Vector3();
 
-  constructor(private readonly camera: THREE.PerspectiveCamera) {}
+  constructor(readonly camera: THREE.PerspectiveCamera) {}
 
   look(dx: number, dy: number, player: PlayerController): void {
     // Prone limits how fast the body can swing round.

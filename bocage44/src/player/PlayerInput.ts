@@ -29,7 +29,8 @@ export class PlayerInput {
     return {
       forward: (i.isDown(KEYS.forward) ? 1 : 0) - (i.isDown(KEYS.back) ? 1 : 0),
       right: (i.isDown(KEYS.right) ? 1 : 0) - (i.isDown(KEYS.left) ? 1 : 0),
-      sprint: KEYS.sprint.some((k) => i.isDown(k)),
+      // While aiming, Shift holds the breath instead of sprinting.
+      sprint: KEYS.sprint.some((k) => i.isDown(k)) && !i.mouseRight,
       walk: this.walk,
       jumpPressed: i.consumePressed(KEYS.jump),
       crouchPressed: i.consumePressed(KEYS.crouch),

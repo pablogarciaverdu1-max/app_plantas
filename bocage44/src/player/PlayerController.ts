@@ -57,6 +57,8 @@ export class PlayerController {
   leanOffset = 0;
   onGround = false;
   sprinting = false;
+  /** Extra speed multiplier (leg wounds, aiming down sights). */
+  speedFactor = 1;
   /** Vertical speed at the moment of the last landing (for camera dip). */
   lastLandingSpeed = 0;
   private landedThisStep = false;
@@ -122,7 +124,7 @@ export class PlayerController {
     if (fwd < 0) speed *= 0.65;
     else if (Math.abs(rgt) > 0.7) speed *= 0.85;
     // Tired legs.
-    speed *= 1 - this.stamina.breathlessness * 0.15;
+    speed *= (1 - this.stamina.breathlessness * 0.15) * this.speedFactor;
 
     const sin = Math.sin(intent.yaw);
     const cos = Math.cos(intent.yaw);

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createStoneMaterial, createWoodMaterial } from '../render/Materials';
+import { Surface } from '../damage/SurfaceMaterial';
 
 /**
  * Phase 1 movement course on flat ground near the origin: walls of 0.5 to 1.5 m,
@@ -24,6 +25,8 @@ export function buildTestRange(): THREE.Group {
     m.position.set(x, y + h / 2, z);
     m.rotation.y = rotY;
     m.castShadow = m.receiveShadow = true;
+    m.userData.surface = mat === stone ? Surface.Stone : Surface.Wood;
+    m.userData.cover = true;
     group.add(m);
     return m;
   };
@@ -45,6 +48,7 @@ export function buildTestRange(): THREE.Group {
     m.rotation.x = rad;
     const rise = Math.sin(rad) * len;
     m.position.set(-9 + i * 4, BASE + rise / 2, -16);
+    m.userData.surface = Surface.Wood;
     m.castShadow = m.receiveShadow = true;
     group.add(m);
   });

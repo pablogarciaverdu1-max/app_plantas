@@ -11,6 +11,11 @@ interface TestApi {
   stepFrames(s: number): void;
   setTimeOfDay(p: number): void;
   teleport(x: number, y: number, z: number, yaw?: number): void;
+  lookAt(x: number, y: number, z: number): void;
+  aim(v: boolean): void;
+  trigger(v: boolean): void;
+  setInvulnerable(v: boolean): void;
+  soldiers(): { state: string; alive: boolean; pos: number[] }[];
 }
 
 async function shot(page: Page, name: string, setup: (g: TestApi) => void, frames = 0.1): Promise<void> {
@@ -18,7 +23,8 @@ async function shot(page: Page, name: string, setup: (g: TestApi) => void, frame
     ({ src, frames }) => {
       const g = (window as unknown as { __game: TestApi }).__game;
       new Function('g', src)(g);
-      g.stepFrames(frames);
+      // The loop simulates at most 0.25 s per call, so advance in slices.
+      for (let t = 0; t < frames; t += 0.2) g.stepFrames(Math.min(0.2, frames - t));
     },
     { src: `(${setup.toString()})(g)`, frames },
   );
@@ -40,4 +46,12 @@ test('screenshots', async ({ page }) => {
   await shot(page, 'course-walls', (g) => { g.setTimeOfDay(1); g.teleport(-3, 0.1, 0, 0); });
   await shot(page, 'course-ramps', (g) => { g.teleport(-5, 0.1, -9, 0); });
   await shot(page, 'course-tunnels', (g) => { g.teleport(6, 0.1, -20, 0); });
+  // Combat: hip view, then on the sights, looking at the patrol behind the field wall.
+  await shot(page, 'combat-hip', (g) => { g.setInvulnerable(true); g.teleport(-2, 0.1, -40, 0); g.lookAt(-4, 0.6, -82); }, 0.5);
+  await shot(page, 'combat-ads', (g) => { g.aim(true); g.lookAt(-4, 0.6, -82); }, 0.6);
+  // Fire a shot and let the enemy react for a few seconds.
+  await shot(page, 'combat-fire', (g) => { g.trigger(true); }, 0.05);
+  await shot(page, 'combat-react', (g) => { g.trigger(false); g.aim(false); }, 6);
+  const soldiers = await page.evaluate(() => (window as unknown as { __game: TestApi }).__game.soldiers());
+  console.log(JSON.stringify(soldiers.map((s) => s.state)));
 });

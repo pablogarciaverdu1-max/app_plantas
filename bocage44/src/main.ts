@@ -15,7 +15,10 @@ overlay.innerHTML = `
 document.body.appendChild(overlay);
 
 // Browsers require a click before capturing the mouse or starting audio.
-overlay.addEventListener('click', () => game.input.requestLock());
+overlay.addEventListener('click', () => {
+  game.audio.start();
+  game.input.requestLock();
+});
 document.addEventListener('pointerlockchange', () => {
   overlay.classList.toggle('hidden', game.input.locked);
 });
@@ -38,6 +41,16 @@ if (new URLSearchParams(location.search).get('test') === '1') {
     cameraPosition: () => game.camera.position.toArray(),
     playerPosition: () => game.player.position.toArray(),
     playerStance: () => game.player.stance,
+    soldiers: () => game.enemies.soldiers.map((s) => ({ state: s.order.state, role: s.order.role, alive: s.alive, pos: s.body.position.toArray(), awareness: s.brain.awareness })),
+    aim: (v: boolean) => (game.input.mouseRight = v),
+    trigger: (v: boolean) => (game.input.mouseLeft = v),
+    playerHealth: () => game.combat.health.value,
+    setInvulnerable: (v: boolean) => (game.invulnerable = v),
+    lookAt: (x: number, y: number, z: number) => {
+      const e = game.camera.position;
+      game.rig.yaw = Math.atan2(-(x - e.x), -(z - e.z));
+      game.rig.pitch = Math.atan2(y - e.y, Math.hypot(x - e.x, z - e.z));
+    },
     teleport: (x: number, y: number, z: number, yaw = 0) => {
       game.player.teleport(new THREE.Vector3(x, y, z));
       game.rig.yaw = yaw;

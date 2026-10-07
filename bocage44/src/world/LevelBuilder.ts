@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { Terrain, terrainHeight } from './Terrain';
 import { buildTestRange } from './TestRange';
+import { buildEnemyArea } from './EnemyArea';
+import { Surface } from '../damage/SurfaceMaterial';
 import { createWoodMaterial } from '../render/Materials';
 
 /**
@@ -14,6 +16,7 @@ export function buildTestScene(scene: THREE.Scene): THREE.Group {
   scene.add(level);
   level.add(new Terrain().mesh);
   level.add(buildTestRange());
+  level.add(buildEnemyArea());
 
   const postGeometry = new THREE.CylinderGeometry(0.06, 0.075, 1.3, 10, 1);
   postGeometry.translate(0, 0.65, 0);
@@ -45,6 +48,7 @@ export function buildTestScene(scene: THREE.Scene): THREE.Group {
   }
   rails.count = rail;
   for (const mesh of [posts, rails]) {
+    mesh.userData.surface = Surface.Wood;
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     level.add(mesh);
