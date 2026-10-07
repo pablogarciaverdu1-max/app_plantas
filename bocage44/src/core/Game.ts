@@ -23,6 +23,7 @@ export class Game {
   private readonly fog = new THREE.FogExp2(0x000000, 0.05);
   private readonly pmrem: THREE.PMREMGenerator;
   private readonly sunDir = new THREE.Vector3(0, 1, 0);
+  private readonly envScene = new THREE.Scene();
   private envTarget: THREE.WebGLRenderTarget | null = null;
   private yaw = 0;
   private pitch = 0;
@@ -51,6 +52,9 @@ export class Game {
     sc.right = sc.top = 40;
     sc.near = 1;
     sc.far = 300;
+
+    // Shares the sky material, so it always matches the visible sky.
+    this.envScene.add(this.sky.mesh.clone());
 
     buildTestScene(this.scene);
     this.camera.position.set(0, terrainHeight(0, 6) + EYE_HEIGHT, 6);
@@ -113,28 +117,28 @@ export class Game {
   }
 
   /** Image-based lighting generated from the procedural sky. */
+  // The sky is soft and overcast, so a small 64 px environment is enough and
+  // cheap to regenerate when the hour changes.
   private updateEnvironment(): void {
-    const envScene = new THREE.Scene();
-    const skyCopy = this.sky.mesh.clone();
-    skyCopy.position.set(0, 0, 0);
-    envScene.add(skyCopy);
     this.envTarget?.dispose();
-    this.envTarget = this.pmrem.fromScene(envScene, 0, 0.1, 1000);
+    this.envTarget = this.pmrem.fromScene(this.envScene, 0, 0.1, 1000, { size: 64 });
     this.scene.environment = this.envTarget.texture;
     this.scene.environmentIntensity = 0.6;
   }
 
   private step(dt: number): void {
-    const [dx, dy] = this.input.consumeMouse();
-    const sensitivity = 0.0022;
-    this.yaw -= dx * sensitivity;
-    this.pitch = Math.min(1.5, Math.max(-1.5, this.pitch - dy * sensitivity));
     // Subtle breathing so the static view never feels frozen.
     const t = this.loop.time + dt;
     this.camera.position.y = terrainHeight(this.camera.position.x, this.camera.position.z) + EYE_HEIGHT + Math.sin(t * 1.6) * 0.004;
   }
 
   private render(frameTime: number): void {
+    // Mouse look is applied every rendered frame, not every simulation step,
+    // so turning stays smooth on 120/144 Hz screens.
+    const [dx, dy] = this.input.consumeMouse();
+    const sensitivity = 0.0022;
+    this.yaw -= dx * sensitivity;
+    this.pitch = Math.min(1.5, Math.max(-1.5, this.pitch - dy * sensitivity));
     this.camera.rotation.set(this.pitch, this.yaw, 0, 'YXZ');
     this.sky.update(this.loop.time, this.camera.position);
     this.sun.target.position.copy(this.camera.position);
