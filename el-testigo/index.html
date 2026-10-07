@@ -1,0 +1,1313 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>El Testigo</title>
+<style>
+  :root {
+    --ink: #2a1f1a;
+    --paper: #fbf3e4;
+    --gold: #c8963e;
+    --rose: #b8435a;
+    --shade: rgba(20, 12, 10, 0.78);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #120c0a;
+    font-family: Georgia, 'Times New Roman', serif;
+    color: var(--paper);
+    overflow: hidden;
+    user-select: none;
+  }
+  #stage {
+    position: relative;
+    width: min(100vw, calc(100vh * 16 / 9));
+    height: min(100vh, calc(100vw * 9 / 16));
+    margin: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    overflow: hidden;
+    background: #000;
+  }
+  #bg, #chars { position: absolute; inset: 0; }
+  #bg svg, #chars svg { width: 100%; height: 100%; display: block; }
+  .char {
+    position: absolute;
+    bottom: 0;
+    width: 34%;
+    height: 92%;
+    transition: left 0.5s, opacity 0.4s, filter 0.3s;
+  }
+  .char.dim { filter: brightness(0.62) saturate(0.8); }
+  .char.left { left: 4%; }
+  .char.center { left: 33%; }
+  .char.right { left: 62%; }
+  .char.enter { opacity: 0; }
+  #box {
+    position: absolute;
+    left: 3%;
+    right: 3%;
+    bottom: 3%;
+    min-height: 26%;
+    padding: 2.6% 3% 2%;
+    background: var(--shade);
+    border: 1px solid rgba(200, 150, 62, 0.5);
+    border-radius: 10px;
+    backdrop-filter: blur(3px);
+    font-size: clamp(14px, 2.15vw, 26px);
+    line-height: 1.45;
+    cursor: pointer;
+  }
+  #name {
+    position: absolute;
+    top: -0.9em;
+    left: 3%;
+    padding: 0.15em 0.9em;
+    background: var(--rose);
+    border-radius: 6px;
+    font-size: 0.85em;
+    font-style: italic;
+    letter-spacing: 0.03em;
+  }
+  #name:empty { display: none; }
+  #text.narration { font-style: italic; color: #f0e2c8; }
+  #more {
+    position: absolute;
+    right: 2%;
+    bottom: 6%;
+    font-size: 0.8em;
+    color: var(--gold);
+    animation: blink 1.2s infinite;
+  }
+  @keyframes blink { 50% { opacity: 0.2; } }
+  #choices {
+    position: absolute;
+    left: 50%;
+    bottom: 32%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.7em;
+    width: 62%;
+    font-size: clamp(13px, 1.9vw, 23px);
+  }
+  #choices button {
+    font: inherit;
+    color: var(--paper);
+    background: rgba(42, 24, 20, 0.88);
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    padding: 0.6em 1em;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s, transform 0.15s;
+  }
+  #choices button:hover, #choices button:focus { background: rgba(184, 67, 90, 0.92); transform: translateX(4px); outline: none; }
+  #toast {
+    position: absolute;
+    top: 4%;
+    right: 3%;
+    padding: 0.4em 1em;
+    background: rgba(184, 67, 90, 0.9);
+    border-radius: 20px;
+    font-size: clamp(12px, 1.5vw, 18px);
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+  }
+  #hud {
+    position: absolute;
+    top: 3%;
+    left: 3%;
+    display: flex;
+    gap: 0.6em;
+    font-size: clamp(11px, 1.3vw, 15px);
+  }
+  #hud button {
+    font: inherit;
+    color: var(--paper);
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    padding: 0.3em 0.8em;
+    cursor: pointer;
+  }
+  #clock {
+    position: absolute;
+    top: 3%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: clamp(11px, 1.4vw, 17px);
+    letter-spacing: 0.15em;
+    color: #f5d9a8;
+    text-shadow: 0 1px 4px #000;
+  }
+  #fade {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.9s;
+  }
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1em;
+    text-align: center;
+    background: radial-gradient(ellipse at center, rgba(60, 25, 25, 0.55), rgba(10, 5, 5, 0.94));
+  }
+  .screen.hidden { display: none; }
+  #stage.menu #box, #stage.menu #hud, #stage.menu #clock { display: none; }
+  .screen h1 {
+    margin: 0;
+    font-size: clamp(36px, 7vw, 92px);
+    font-weight: normal;
+    font-style: italic;
+    color: #f7e3bf;
+    text-shadow: 0 3px 18px rgba(184, 67, 90, 0.7);
+  }
+  .screen .sub { font-size: clamp(13px, 1.8vw, 22px); color: #e8cfa6; max-width: 70%; }
+  .screen .small { font-size: clamp(11px, 1.3vw, 15px); opacity: 0.7; max-width: 70%; }
+  .screen button, .screen input {
+    font: inherit;
+    font-size: clamp(14px, 1.8vw, 22px);
+    padding: 0.5em 1.4em;
+    border-radius: 8px;
+    border: 1px solid var(--gold);
+    background: rgba(184, 67, 90, 0.85);
+    color: var(--paper);
+    cursor: pointer;
+  }
+  .screen input { background: rgba(0, 0, 0, 0.5); text-align: center; cursor: text; width: 12em; }
+  .screen .row { display: flex; gap: 0.8em; }
+  #log {
+    position: absolute;
+    inset: 6% 8%;
+    overflow-y: auto;
+    padding: 2em;
+    background: rgba(15, 9, 8, 0.95);
+    border: 1px solid var(--gold);
+    border-radius: 10px;
+    font-size: clamp(12px, 1.5vw, 18px);
+    line-height: 1.5;
+  }
+  #log.hidden { display: none; }
+  #log p { margin: 0 0 0.6em; }
+  #log b { color: #e9a3b1; }
+</style>
+</head>
+<body>
+<div id="stage" class="menu">
+  <div id="bg"></div>
+  <div id="chars"></div>
+  <div id="clock"></div>
+  <div id="hud">
+    <button id="btnLog" title="Ver lo que se ha dicho">Historial</button>
+    <button id="btnSound" title="Sonido">Sonido: sí</button>
+  </div>
+  <div id="box">
+    <div id="name"></div>
+    <div id="text"></div>
+    <div id="more">▼</div>
+  </div>
+  <div id="choices"></div>
+  <div id="toast"></div>
+  <div id="fade"></div>
+  <div id="log" class="hidden"></div>
+  <div id="title" class="screen">
+    <h1>El Testigo</h1>
+    <div class="sub">Una boda en un cortijo. Dos horas para la ceremonia. Las alianzas, desaparecidas.<br />Y tres mujeres que te lo van a poner difícil.</div>
+    <div class="row">
+      <input id="playerName" maxlength="14" value="Dani" aria-label="Tu nombre" />
+      <button id="btnNew">Empezar</button>
+      <button id="btnContinue">Continuar</button>
+    </div>
+    <div class="small">Comedia romántica picante. Todos los personajes son adultos y ficticios.<br />Haz clic o pulsa Espacio para avanzar · elige con el ratón o con los números.</div>
+  </div>
+  <div id="ending" class="screen hidden">
+    <h1 id="endTitle"></h1>
+    <div class="sub" id="endText"></div>
+    <div class="small" id="endCount"></div>
+    <div class="row"><button id="btnAgain">Volver a empezar</button></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ======================================================================
+   ART — backgrounds and characters drawn as SVG
+   ====================================================================== */
+
+const W = 1600, H = 900;
+
+const BG = {
+  // Whitewashed cortijo courtyard in the late afternoon sun.
+  patio: () => `
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6b26b"/><stop offset="0.55" stop-color="#fbd7a0"/><stop offset="1" stop-color="#fde9c4"/></linearGradient>
+      <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c98b5c"/><stop offset="1" stop-color="#9e6440"/></linearGradient>
+    </defs>
+    <rect width="${W}" height="${H}" fill="url(#sky)"/>
+    <circle cx="1320" cy="210" r="90" fill="#fff1c9" opacity="0.8"/>
+    <rect y="230" width="${W}" height="470" fill="#f7efe3"/>
+    ${[0,1,2,3,4].map(i => `<path d="M${120+i*300} 700 V420 a110 110 0 0 1 220 0 V700 Z" fill="#e9dcc8"/><path d="M${140+i*300} 700 V430 a90 90 0 0 1 180 0 V700 Z" fill="#7a4e33" opacity="0.35"/>`).join('')}
+    <rect y="215" width="${W}" height="30" fill="#b5572c"/>
+    ${Array.from({length: 40}, (_, i) => `<path d="M${i*40} 215 q20 -22 40 0" fill="#c86a3a"/>`).join('')}
+    ${Array.from({length: 70}, (_, i) => `<circle cx="${(i*97)%W}" cy="${250+((i*53)%120)}" r="${10+(i%4)*4}" fill="${i%3?'#c2307a':'#e05596'}" opacity="0.85"/>`).join('')}
+    ${Array.from({length: 30}, (_, i) => `<circle cx="${(i*131)%W}" cy="${245+((i*29)%90)}" r="9" fill="#4f7a3a"/>`).join('')}
+    <rect y="700" width="${W}" height="200" fill="url(#floor)"/>
+    ${Array.from({length: 18}, (_, i) => `<line x1="${i*100}" y1="700" x2="${i*100-160}" y2="900" stroke="#8a5536" stroke-width="2" opacity="0.4"/>`).join('')}
+    <ellipse cx="800" cy="760" rx="150" ry="28" fill="#6f4a33" opacity="0.4"/>
+    <rect x="740" y="640" width="120" height="110" rx="10" fill="#e6d2b4"/><ellipse cx="800" cy="640" rx="70" ry="16" fill="#7fb3c9"/>
+    <rect x="70" y="600" width="70" height="100" fill="#b56d3f"/><circle cx="105" cy="570" r="55" fill="#3f6b2f"/>
+    <rect x="1460" y="600" width="70" height="100" fill="#b56d3f"/><circle cx="1495" cy="570" r="55" fill="#3f6b2f"/>`,
+
+  // Wine cellar: barrels, arches, a single bulb.
+  bodega: () => `
+    <defs><radialGradient id="glow" cx="0.5" cy="0.25" r="0.7"><stop offset="0" stop-color="#ffcf7a" stop-opacity="0.55"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>
+    <rect width="${W}" height="${H}" fill="#2a1a12"/>
+    ${[0,1,2].map(i => `<path d="M${i*560-80} 900 V260 a330 330 0 0 1 660 0 V900" fill="none" stroke="#4a2e1e" stroke-width="60"/>`).join('')}
+    ${Array.from({length: 9}, (_, i) => { const x = 60 + i*175, y = 560 + (i%2)*40; return `<g><ellipse cx="${x}" cy="${y}" rx="85" ry="110" fill="#6a3d22"/><ellipse cx="${x}" cy="${y}" rx="70" ry="95" fill="#7d4a2a"/><rect x="${x-85}" y="${y-60}" width="170" height="10" fill="#3b2a20"/><rect x="${x-85}" y="${y+50}" width="170" height="10" fill="#3b2a20"/><circle cx="${x}" cy="${y}" r="8" fill="#2a1a12"/></g>`; }).join('')}
+    <rect y="760" width="${W}" height="140" fill="#1c120c"/>
+    <line x1="800" y1="0" x2="800" y2="150" stroke="#111" stroke-width="3"/><circle cx="800" cy="165" r="16" fill="#ffe2a0"/>
+    <rect width="${W}" height="${H}" fill="url(#glow)"/>`,
+
+  // Goat pen behind the cortijo.
+  corral: () => `
+    <rect width="${W}" height="${H}" fill="#f9c98a"/>
+    <path d="M0 520 Q400 440 800 500 T1600 480 V900 H0Z" fill="#b9a26a"/>
+    <path d="M0 600 Q500 560 1000 610 T1600 590 V900 H0Z" fill="#a08452"/>
+    ${Array.from({length: 7}, (_, i) => `<circle cx="${100+i*240}" cy="${470-((i*37)%40)}" r="${40+(i%3)*12}" fill="#6b7b3a"/><rect x="${92+i*240}" y="${480-((i*37)%40)}" width="16" height="50" fill="#5a3b22"/>`).join('')}
+    ${Array.from({length: 17}, (_, i) => `<rect x="${i*100}" y="640" width="14" height="150" fill="#7a5532"/>`).join('')}
+    <rect y="660" width="${W}" height="12" fill="#8a6038"/><rect y="730" width="${W}" height="12" fill="#8a6038"/>
+    <g transform="translate(1180 560)">
+      <ellipse cx="0" cy="40" rx="95" ry="48" fill="#f2ece0"/><rect x="-70" y="70" width="14" height="60" fill="#e6dccb"/><rect x="50" y="70" width="14" height="60" fill="#e6dccb"/>
+      <ellipse cx="95" cy="-10" rx="38" ry="30" fill="#f2ece0"/><path d="M85 -35 l-15 -30 M105 -35 l10 -30" stroke="#8b7d6b" stroke-width="7" stroke-linecap="round"/>
+      <circle cx="108" cy="-14" r="5" fill="#3a2a1a"/><path d="M118 10 q10 18 -4 26" fill="#e6dccb"/>
+      <rect x="60" y="8" width="40" height="8" fill="#c0392b"/>
+    </g>
+    <rect y="790" width="${W}" height="110" fill="#8f7347"/>`,
+
+  // Chapel / ceremony under the olive tree.
+  ceremonia: () => `
+    <rect width="${W}" height="${H}" fill="#f8c27a"/>
+    <rect y="560" width="${W}" height="340" fill="#cbb98a"/>
+    <path d="M800 120 C 600 140 500 260 560 340 C 430 360 460 480 620 470 C 640 540 960 540 980 470 C 1140 480 1170 360 1040 340 C 1100 260 1000 140 800 120Z" fill="#7d8a52"/>
+    <path d="M780 480 q-30 120 -10 220 h60 q20 -100 -10 -220Z" fill="#6b4a2c"/>
+    <path d="M560 360 Q800 200 1040 360" fill="none" stroke="#fff" stroke-width="18" stroke-dasharray="2 22" stroke-linecap="round"/>
+    ${Array.from({length: 6}, (_, i) => `<rect x="${140+i*230}" y="640" width="180" height="16" fill="#f4ead8"/><rect x="${140+i*230}" y="600" width="12" height="80" fill="#f4ead8"/><rect x="${308+i*230}" y="600" width="12" height="80" fill="#f4ead8"/>`).join('')}
+    ${Array.from({length: 24}, (_, i) => `<circle cx="${60+i*65}" cy="${720+(i%3)*30}" r="8" fill="${['#f6d2dc','#fff','#e9b5c4'][i%3]}"/>`).join('')}`,
+
+  // Banquet tables, string lights, night falling.
+  banquete: () => `
+    <defs><linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b2250"/><stop offset="0.6" stop-color="#8a4a6b"/><stop offset="1" stop-color="#e48a6a"/></linearGradient></defs>
+    <rect width="${W}" height="${H}" fill="url(#dusk)"/>
+    <rect y="380" width="${W}" height="200" fill="#efe4d2"/><rect y="370" width="${W}" height="18" fill="#9e4b2a"/>
+    ${[0,1,2,3].map(i => `<rect x="${160+i*360}" y="430" width="90" height="150" fill="#3a2a40" opacity="0.5" rx="45"/>`).join('')}
+    ${[0,1,2].map(k => `<path d="M0 ${150+k*60} Q800 ${300+k*60} 1600 ${150+k*60}" fill="none" stroke="#222" stroke-width="2"/>` + Array.from({length: 24}, (_, i) => { const x = i*70+20; const t = x/1600; const y = (150+k*60)*(1-t)*(1-t) + 2*(1-t)*t*(300+k*60) + t*t*(150+k*60); return `<circle cx="${x}" cy="${y+8}" r="7" fill="#ffe6a3"/><circle cx="${x}" cy="${y+8}" r="16" fill="#ffd36e" opacity="0.25"/>`; }).join('')).join('')}
+    <rect y="580" width="${W}" height="320" fill="#5a3a2a"/>
+    ${[0,1,2].map(i => `<ellipse cx="${300+i*500}" cy="700" rx="200" ry="55" fill="#f7f1e6"/><rect x="${100+i*500}" y="700" width="400" height="120" fill="#f1e7d6"/>${[0,1,2,3,4].map(j => `<rect x="${200+i*500+j*45}" y="650" width="8" height="40" fill="#e8f0ef" opacity="0.8"/><circle cx="${204+i*500+j*45}" cy="645" r="12" fill="#8c1e2e" opacity="0.65"/>`).join('')}<circle cx="${300+i*500}" cy="660" r="26" fill="#f2a7bb"/>`).join('')}`,
+
+  // Dance floor at night.
+  baile: () => `
+    <rect width="${W}" height="${H}" fill="#140f24"/>
+    ${Array.from({length: 60}, (_, i) => `<circle cx="${(i*173)%W}" cy="${(i*61)%300}" r="${1+(i%3)}" fill="#fff" opacity="0.7"/>`).join('')}
+    ${Array.from({length: 5}, (_, k) => Array.from({length: 26}, (_, i) => { const x = i*64; return `<circle cx="${x}" cy="${120+k*40+Math.sin(i/3+k)*25}" r="6" fill="${['#ffe6a3','#ffb3c7','#a3e6ff'][(i+k)%3]}"/>`; }).join('')).join('')}
+    <path d="M200 900 L520 520 H1080 L1400 900Z" fill="#3a2a30"/>
+    ${Array.from({length: 8}, (_, i) => `<line x1="${520+i*80}" y1="520" x2="${200+i*171}" y2="900" stroke="#57404a" stroke-width="3"/>`).join('')}
+    <line x1="800" y1="0" x2="800" y2="90" stroke="#555" stroke-width="2"/><circle cx="800" cy="130" r="40" fill="#cfcfe0"/>${Array.from({length: 12}, (_, i) => `<line x1="800" y1="130" x2="${800+Math.cos(i)*700}" y2="${130+Math.abs(Math.sin(i))*800}" stroke="#ffffff" stroke-width="2" opacity="0.08"/>`).join('')}
+    <rect x="1250" y="420" width="220" height="110" fill="#2b2b2b"/><circle cx="1300" cy="475" r="30" fill="#111"/><circle cx="1420" cy="475" r="30" fill="#111"/>`,
+
+  // Terrace over the olive groves, moonlight.
+  terraza: () => `
+    <rect width="${W}" height="${H}" fill="#1d2140"/>
+    <circle cx="1250" cy="170" r="70" fill="#f4f0d6"/><circle cx="1250" cy="170" r="140" fill="#f4f0d6" opacity="0.08"/>
+    ${Array.from({length: 90}, (_, i) => `<circle cx="${(i*211)%W}" cy="${(i*83)%420}" r="${1+(i%2)}" fill="#fff" opacity="0.6"/>`).join('')}
+    <path d="M0 520 Q300 470 600 510 T1200 490 T1600 500 V900 H0Z" fill="#232b3a"/>
+    ${Array.from({length: 26}, (_, i) => `<circle cx="${(i*67)%W}" cy="${520+((i*41)%60)}" r="${18+(i%3)*6}" fill="#2f3d3a"/>`).join('')}
+    <rect y="620" width="${W}" height="40" fill="#e9e1d2"/>${Array.from({length: 20}, (_, i) => `<rect x="${i*84+20}" y="660" width="26" height="110" fill="#ddd3c0"/>`).join('')}
+    <rect y="770" width="${W}" height="130" fill="#b9a68a"/>
+    <path d="M60 620 q20 -120 90 -150 q-10 80 -40 150Z" fill="#3c5a34"/><circle cx="120" cy="460" r="10" fill="#e05596"/>`,
+
+  // Pool at night with lanterns.
+  piscina: () => `
+    <rect width="${W}" height="${H}" fill="#171a33"/>
+    ${Array.from({length: 70}, (_, i) => `<circle cx="${(i*157)%W}" cy="${(i*71)%330}" r="1.5" fill="#fff" opacity="0.6"/>`).join('')}
+    <rect y="360" width="${W}" height="200" fill="#e7dfcf"/><rect y="350" width="${W}" height="14" fill="#9e4b2a"/>
+    ${[0,1,2,3].map(i => `<rect x="${200+i*380}" y="410" width="80" height="150" rx="40" fill="#2a2440" opacity="0.6"/>`).join('')}
+    <rect y="560" width="${W}" height="340" fill="#cdbfa8"/>
+    <path d="M150 640 H1450 L1550 880 H50Z" fill="#1d6f8a"/><path d="M200 660 H1400 L1480 860 H120Z" fill="#2b93b0"/>
+    ${Array.from({length: 14}, (_, i) => `<path d="M${200+i*90} ${700+(i%3)*50} q25 -12 50 0" stroke="#9fe3f5" stroke-width="3" fill="none" opacity="0.6"/>`).join('')}
+    ${[0,1,2,3,4,5].map(i => `<circle cx="${120+i*270}" cy="600" r="14" fill="#ffd36e"/><circle cx="${120+i*270}" cy="600" r="40" fill="#ffd36e" opacity="0.2"/>`).join('')}`,
+
+  // Hotel corridor of the cortijo, doors and a jasmine pot.
+  pasillo: () => `
+    <rect width="${W}" height="${H}" fill="#3a2a22"/>
+    <path d="M0 0 H1600 L1100 300 H500Z" fill="#2e211b"/>
+    <path d="M500 300 H1100 V700 H500Z" fill="#4a3529"/>
+    <path d="M0 0 L500 300 V700 L0 900Z" fill="#5a4032"/><path d="M1600 0 L1100 300 V700 L1600 900Z" fill="#5a4032"/>
+    <path d="M500 700 H1100 L1600 900 H0Z" fill="#7a3b2a"/><path d="M700 700 H900 L1000 900 H600Z" fill="#9c4a33"/>
+    <path d="M150 260 L330 340 V720 L150 790Z" fill="#6e4429"/><circle cx="300" cy="540" r="8" fill="#d6a84a"/>
+    <path d="M1450 260 L1270 340 V720 L1450 790Z" fill="#6e4429"/><circle cx="1300" cy="540" r="8" fill="#d6a84a"/>
+    <path d="M720 340 H880 V690 H720Z" fill="#6e4429"/><circle cx="860" cy="520" r="6" fill="#d6a84a"/>
+    <circle cx="800" cy="150" r="20" fill="#ffd9a0"/><circle cx="800" cy="150" r="90" fill="#ffd9a0" opacity="0.15"/>
+    <rect x="1120" y="640" width="60" height="70" fill="#b5572c"/>${Array.from({length: 14}, (_, i) => `<circle cx="${1130+(i*7)%50}" cy="${600+(i*13)%50}" r="7" fill="${i%2?'#fff':'#5a7a3a'}"/>`).join('')}`,
+
+  // Olive grove under the moon.
+  olivar: () => `
+    <rect width="${W}" height="${H}" fill="#1b1f38"/>
+    <circle cx="300" cy="160" r="60" fill="#f2efda"/>
+    ${Array.from({length: 80}, (_, i) => `<circle cx="${(i*197)%W}" cy="${(i*67)%380}" r="1.4" fill="#fff" opacity="0.6"/>`).join('')}
+    <path d="M0 560 Q800 500 1600 560 V900 H0Z" fill="#2a2a2a"/>
+    ${Array.from({length: 6}, (_, i) => { const x = 140 + i*270, s = 0.8 + (i%2)*0.35; return `<g transform="translate(${x} ${600 - i%2*30}) scale(${s})"><path d="M-14 0 q-10 -80 14 -150 q24 70 14 150Z" fill="#3a2c22"/><circle cx="0" cy="-180" r="90" fill="#3a4a3a"/><circle cx="-60" cy="-150" r="60" fill="#334234"/><circle cx="60" cy="-150" r="60" fill="#334234"/></g>`; }).join('')}
+    ${Array.from({length: 30}, (_, i) => `<circle cx="${(i*131)%W}" cy="${520+(i*17)%120}" r="2.5" fill="#fff7a8" opacity="${0.4 + (i%3)*0.2}"/>`).join('')}`,
+
+  // Morning after: breakfast table in the courtyard.
+  manana: () => `
+    <rect width="${W}" height="${H}" fill="#fbe3b8"/>
+    <rect y="200" width="${W}" height="420" fill="#f8f2e8"/>
+    ${[0,1,2,3].map(i => `<rect x="${170+i*360}" y="300" width="120" height="200" rx="60" fill="#8fb8c9" opacity="0.55"/>`).join('')}
+    <rect y="620" width="${W}" height="280" fill="#c98b5c"/>
+    <ellipse cx="800" cy="720" rx="420" ry="70" fill="#fff"/>
+    <rect x="620" y="640" width="40" height="60" fill="#fff" stroke="#c8963e" stroke-width="4"/><circle cx="760" cy="690" r="30" fill="#f0c36a"/><circle cx="900" cy="690" r="26" fill="#d65a3a"/><rect x="960" y="650" width="22" height="50" fill="#f5a623"/>`,
+
+  black: () => `<rect width="${W}" height="${H}" fill="#000"/>`,
+};
+
+// Characters: flat illustrated busts. Moods change the eyes, brows and mouth.
+const CHARS = {
+  carmen: { name: 'Carmen', skin: '#e3b48f', hair: '#2b1a12', dress: '#1f4b5a', accent: '#d9b25a', style: 'bun' },
+  vera: { name: 'Vera', skin: '#f0cfb2', hair: '#c4552e', dress: '#2a2a2a', accent: '#9c9c9c', style: 'bob' },
+  ines: { name: 'Inés', skin: '#d9a582', hair: '#5a3418', dress: '#8c2240', accent: '#f0c6a8', style: 'waves' },
+  rober: { name: 'Rober', skin: '#e2b08a', hair: '#3a2416', dress: '#2b2f45', accent: '#ffffff', style: 'short', male: true },
+  remedios: { name: 'Abuela Remedios', skin: '#e0b496', hair: '#d9d6d0', dress: '#3a1f2c', accent: '#d9b25a', style: 'gran' },
+  lucia: { name: 'Lucía', skin: '#edc6a6', hair: '#7a4a24', dress: '#fbf8f1', accent: '#ffffff', style: 'veil' },
+};
+
+function face(mood) {
+  const eyes = {
+    neutral: '<ellipse cx="-30" cy="0" rx="9" ry="11"/><ellipse cx="30" cy="0" rx="9" ry="11"/>',
+    smile: '<path d="M-42 2 q12 -12 24 0" stroke-width="5" fill="none"/><path d="M18 2 q12 -12 24 0" stroke-width="5" fill="none"/>',
+    smirk: '<ellipse cx="-30" cy="2" rx="9" ry="7"/><path d="M18 0 q12 -10 24 0" stroke-width="5" fill="none"/>',
+    angry: '<ellipse cx="-30" cy="2" rx="8" ry="9"/><ellipse cx="30" cy="2" rx="8" ry="9"/>',
+    surprised: '<circle cx="-30" cy="0" r="12"/><circle cx="30" cy="0" r="12"/>',
+    blush: '<path d="M-42 2 q12 -10 24 0" stroke-width="5" fill="none"/><path d="M18 2 q12 -10 24 0" stroke-width="5" fill="none"/>',
+    sad: '<ellipse cx="-30" cy="4" rx="8" ry="9"/><ellipse cx="30" cy="4" rx="8" ry="9"/>',
+  }[mood] || '';
+  const brows = {
+    angry: '<path d="M-46 -26 L-14 -16 M46 -26 L14 -16" stroke-width="6"/>',
+    surprised: '<path d="M-46 -32 q16 -10 32 0 M14 -32 q16 -10 32 0" stroke-width="5" fill="none"/>',
+    sad: '<path d="M-46 -16 L-14 -24 M46 -16 L14 -24" stroke-width="5"/>',
+    smirk: '<path d="M-46 -22 q16 -6 32 0 M14 -30 q16 -6 32 4" stroke-width="5" fill="none"/>',
+  }[mood] || '<path d="M-46 -24 q16 -8 32 0 M14 -24 q16 -8 32 0" stroke-width="5" fill="none"/>';
+  const mouth = {
+    neutral: '<path d="M-16 56 q16 6 32 0" stroke-width="5" fill="none"/>',
+    smile: '<path d="M-24 50 q24 28 48 0 z" fill="#8a2a2a"/>',
+    smirk: '<path d="M-18 56 q22 10 36 -8" stroke-width="5" fill="none"/>',
+    angry: '<path d="M-18 62 q18 -10 36 0" stroke-width="5" fill="none"/>',
+    surprised: '<ellipse cx="0" cy="60" rx="11" ry="14" fill="#5a1f1f"/>',
+    blush: '<path d="M-16 54 q16 12 32 0" stroke-width="5" fill="none"/>',
+    sad: '<path d="M-16 62 q16 -8 32 0" stroke-width="5" fill="none"/>',
+  }[mood] || '';
+  const cheeks = mood === 'blush' ? '<ellipse cx="-44" cy="30" rx="18" ry="10" fill="#e8707a" opacity="0.55"/><ellipse cx="44" cy="30" rx="18" ry="10" fill="#e8707a" opacity="0.55"/>' : '';
+  return `<g stroke="#2a1a14" fill="#2a1a14" stroke-linecap="round">${brows}${eyes}</g>${cheeks}<g stroke="#7a3030" fill="none" stroke-linecap="round">${mouth}</g>`;
+}
+
+function portrait(key, mood) {
+  const c = CHARS[key];
+  const hairBack = {
+    bun: '<circle cx="0" cy="-150" r="62"/><ellipse cx="0" cy="-60" rx="128" ry="130"/>',
+    bob: '<path d="M-135 -60 Q-140 -200 0 -200 Q140 -200 135 -60 L140 70 Q90 90 60 40 L-60 40 Q-90 90 -140 70Z"/>',
+    waves: '<path d="M-130 -60 Q-150 -210 0 -205 Q150 -210 130 -60 Q170 120 120 260 Q60 230 70 120 L-70 120 Q-60 230 -120 260 Q-170 120 -130 -60Z"/>',
+    short: '<ellipse cx="0" cy="-70" rx="122" ry="118"/>',
+    gran: '<ellipse cx="0" cy="-70" rx="128" ry="122"/><circle cx="0" cy="-170" r="50"/>',
+    veil: '<path d="M-130 -60 Q-150 -210 0 -205 Q150 -210 130 -60 Q150 120 110 200 L-110 200 Q-150 120 -130 -60Z"/>',
+  }[c.style];
+  const hairFront = {
+    bun: '<path d="M-118 -60 Q-110 -175 0 -170 Q110 -175 118 -60 Q60 -130 0 -120 Q-60 -130 -118 -60Z"/>',
+    bob: '<path d="M-120 -40 Q-130 -180 0 -178 Q130 -180 120 -40 Q70 -150 -40 -120 Q-90 -100 -120 -40Z"/>',
+    waves: '<path d="M-118 -50 Q-120 -180 0 -176 Q120 -180 118 -50 Q90 -140 10 -150 Q-80 -140 -118 -50Z"/>',
+    short: '<path d="M-112 -60 Q-110 -180 0 -176 Q110 -180 112 -60 Q80 -120 0 -128 Q-80 -120 -112 -60Z"/>',
+    gran: '<path d="M-116 -60 Q-110 -175 0 -170 Q110 -175 116 -60 Q60 -120 0 -118 Q-60 -120 -116 -60Z"/>',
+    veil: '<path d="M-118 -50 Q-120 -180 0 -176 Q120 -180 118 -50 Q60 -150 0 -140 Q-60 -150 -118 -50Z"/>',
+  }[c.style];
+  // Outfit: dress with neckline, or suit for the men and grandma's shawl.
+  const outfit = c.male
+    ? `<path d="M-210 520 Q-200 250 -70 200 L0 280 L70 200 Q200 250 210 520Z" fill="${c.dress}"/><path d="M-40 200 L0 280 L40 200Z" fill="#fff"/><path d="M-12 215 L0 300 L12 215Z" fill="#8c2240"/>`
+    : c.style === 'gran'
+      ? `<path d="M-200 520 Q-190 240 -60 200 Q0 230 60 200 Q190 240 200 520Z" fill="${c.dress}"/><path d="M-170 300 Q0 380 170 300 L150 360 Q0 430 -150 360Z" fill="#1f1f1f" opacity="0.8"/><circle cx="0" cy="250" r="10" fill="${c.accent}"/>`
+      : `<path d="M-200 520 Q-195 250 -75 205 Q0 285 75 205 Q195 250 200 520Z" fill="${c.dress}"/><path d="M-75 205 Q0 290 75 205" fill="none" stroke="${c.accent}" stroke-width="5"/>`;
+  const extras = {
+    carmen: `<circle cx="-112" cy="40" r="9" fill="${c.accent}"/><circle cx="112" cy="40" r="9" fill="${c.accent}"/><rect x="120" y="330" width="70" height="95" rx="6" fill="#efe6d2" transform="rotate(-12 150 380)"/><line x1="130" y1="350" x2="180" y2="340" stroke="#888" stroke-width="3"/><line x1="134" y1="370" x2="184" y2="360" stroke="#888" stroke-width="3"/>`,
+    vera: `<rect x="-60" y="300" width="120" height="80" rx="10" fill="#1a1a1a"/><circle cx="0" cy="340" r="28" fill="#3b3b3b"/><circle cx="0" cy="340" r="16" fill="#6a8ca8"/><path d="M-60 300 L-150 210 M60 300 L150 210" stroke="#5a3a20" stroke-width="8"/>`,
+    ines: `<path d="M-30 236 q30 22 60 0" stroke="#f3e2b0" stroke-width="5" fill="none"/><circle cx="0" cy="250" r="7" fill="#f3e2b0"/>`,
+    rober: '<path d="M-60 300 L-20 290" stroke="#fff" stroke-width="5"/><circle cx="-80" cy="290" r="12" fill="#fff"/>',
+    remedios: '<path d="M-60 -2 h40 M20 -2 h40" stroke="#555" stroke-width="4"/><circle cx="-40" cy="0" r="22" fill="none" stroke="#555" stroke-width="4"/><circle cx="40" cy="0" r="22" fill="none" stroke="#555" stroke-width="4"/>',
+    lucia: '<path d="M-130 -150 Q0 -230 130 -150 L190 520 H-190Z" fill="#ffffff" opacity="0.35"/><circle cx="0" cy="-185" r="14" fill="#f3e2b0"/>',
+  }[key] || '';
+  return `<svg viewBox="-260 -260 520 800" preserveAspectRatio="xMidYMax meet">
+    <g fill="${c.hair}">${hairBack}</g>
+    <rect x="-38" y="90" width="76" height="130" fill="${c.skin}"/>
+    ${outfit}
+    <ellipse cx="0" cy="0" rx="108" ry="128" fill="${c.skin}"/>
+    <ellipse cx="-112" cy="10" rx="16" ry="26" fill="${c.skin}"/><ellipse cx="112" cy="10" rx="16" ry="26" fill="${c.skin}"/>
+    <path d="M0 10 q-8 26 0 30" stroke="#b07a5a" stroke-width="4" fill="none"/>
+    ${face(mood)}
+    <g fill="${c.hair}">${hairFront}</g>
+    ${extras}
+  </svg>`;
+}
+</script>
+<script>
+'use strict';
+
+/* ======================================================================
+   STORY — scenes are lists of lines; the last step decides what comes next.
+   Line: [who, text, mood?]  who = character key, 'yo' (the player) or null (narration).
+   Text may be a function of the state. {n} is replaced by the player's name.
+   ====================================================================== */
+
+const S = {};
+const N = null, YO = 'yo';
+
+function scene(id, opts, lines, next) {
+  lines.forEach((l, i) => {
+    const own = Array.isArray(l) ? { who: l[0], text: l[1], mood: l[2] } : { ...l };
+    // A line's own settings (a new background, clock or cast) win over the scene's.
+    const node = { ...(i === 0 ? opts : { keepChars: true }), ...own };
+    node.next = i < lines.length - 1 ? `${id}#${i + 1}` : next;
+    S[i === 0 ? id : `${id}#${i}`] = node;
+  });
+}
+
+const choice = (...options) => ({ choices: options });
+const aff = (st, who) => st.aff[who] || 0;
+
+/* ---------------- Act 1: arrival ---------------- */
+
+scene('start', { bg: 'patio', clock: 'Sábado · 17:02', chars: [] }, [
+  [N, 'Cortijo Los Almendros, a las afueras de Sevilla. Hace un calor que derrite hasta la gomina.'],
+  [N, 'Tu mejor amigo, Rober, se casa a las siete. Tú eres el testigo. Tienes dos únicas misiones: llevar las alianzas y no hacer el ridículo en el discurso.'],
+  { who: 'rober', text: '¡{n}! ¡Por fin! Dime que tienes las alianzas.', mood: 'surprised', show: [['rober', 'center', 'surprised']] },
+  [YO, 'Claro que las tengo. Están en... en...'],
+  [N, 'Te palpas la chaqueta. El bolsillo izquierdo. El derecho. El de dentro. Uno que ni sabías que existía.'],
+  [YO, '...Rober. Respira.'],
+  ['rober', 'No me digas «respira». Cuando me dices «respira» es que la has liado.', 'angry'],
+  [YO, 'Anoche, en la despedida, estaban aquí. Te lo juro.'],
+  ['rober', 'Si Lucía se entera de que hemos perdido sus alianzas, esto deja de ser una boda y pasa a ser un funeral. El mío. Y luego el tuyo.', 'sad'],
+  ['rober', 'Tienes hasta las siete. Yo me voy a distraer a mi suegra, que ya me está mirando como a un pulpo en un garaje.', 'neutral'],
+], 'carmen1');
+
+scene('carmen1', { bg: 'patio', chars: [['carmen', 'center', 'angry']] }, [
+  [N, 'No has dado ni tres pasos cuando una mujer con carpeta, pinganillo y cara de general te corta el paso.'],
+  ['carmen', 'Tú eres el testigo. {n}, ¿no? Llegas cuarenta minutos tarde y llevas la corbata torcida.', 'angry'],
+  [YO, 'Y tú debes de ser Carmen, la hermana de Lucía. Rober me ha hablado mucho de ti.'],
+  ['carmen', 'Seguro que nada bueno. Escúchame bien: hoy no falla nada. Ni las flores, ni el cáterin, ni tú.', 'smirk'],
+], choice(
+  { t: '«Tranquila, conmigo todo sale perfecto. Bueno, casi todo.»', fx: { carmen: 1 }, go: 'carmen1a' },
+  { t: '«¿Das órdenes así a todo el mundo o solo a los que te gustan?»', fx: { carmen: 1 }, set: { carmenFlirt: true }, go: 'carmen1b' },
+  { t: '«Relájate un poco, que es una boda, no un desembarco.»', fx: { carmen: -1 }, go: 'carmen1c' },
+));
+
+scene('carmen1a', { bg: 'patio', keepChars: true }, [
+  ['carmen', '«Casi todo» no me tranquiliza nada.', 'neutral'],
+  [N, 'Te agarra la corbata y te la coloca con dos tirones secos. Huele a azahar y a café.'],
+  ['carmen', 'Ya está. Ahora pareces un testigo y no un camarero en su primer día.', 'smirk'],
+], 'vera1');
+
+scene('carmen1b', { bg: 'patio', keepChars: true }, [
+  ['carmen', '¿Perdona?', 'surprised'],
+  ['carmen', 'Doy órdenes así a todo el mundo. Pero a los que me gustan les doy más.', 'smirk'],
+  [N, 'Se da la vuelta antes de que puedas contestar. Te quedas con la boca abierta y la corbata todavía torcida.'],
+], 'vera1');
+
+scene('carmen1c', { bg: 'patio', keepChars: true }, [
+  ['carmen', 'Un desembarco estaría mejor organizado. Apártate, que viene el de las sillas.', 'angry'],
+], 'vera1');
+
+scene('vera1', { bg: 'patio', chars: [['vera', 'right', 'smirk']] }, [
+  [N, 'Clic. Clic. Alguien te apunta con una cámara enorme desde detrás de un macetero.'],
+  ['vera', 'No te muevas. Esa cara de pánico es oro puro. Va al álbum con pie de foto: «El testigo descubre algo terrible».', 'smirk'],
+  [YO, '¿Tanto se me nota?'],
+  ['vera', 'Soy fotógrafa de bodas, cariño. Llevo seis años viendo caras. La tuya dice «he perdido algo pequeño, redondo y carísimo».', 'smile'],
+  [YO, '...¿Eres fotógrafa o vidente?'],
+  ['vera', 'Vera. Las dos cosas, según la tarifa. Hazme un favor: quítate la chaqueta y ponte contra esa pared.', 'smirk'],
+], choice(
+  { t: '«¿Es para la foto o para ti?»', fx: { vera: 2 }, go: 'vera1a' },
+  { t: 'Obedecer sin rechistar.', fx: { vera: 1 }, go: 'vera1b' },
+  { t: '«No tengo tiempo para fotos, de verdad.»', fx: { vera: -1 }, go: 'vera1c' },
+));
+
+scene('vera1a', { bg: 'patio', keepChars: true }, [
+  ['vera', 'Para la luz. La luz es muy exigente.', 'blush'],
+  ['vera', 'Y yo también.', 'smirk'],
+  [N, 'Dispara tres fotos seguidas. No sabes dónde poner las manos.'],
+  ['vera', 'Perfecto. Ya tengo tu lado bueno. No es el que crees.', 'smile'],
+], 'ines1');
+
+scene('vera1b', { bg: 'patio', keepChars: true }, [
+  ['vera', 'Obediente. Me gusta.', 'smirk'],
+  [N, 'Te hace girar la cara, bajar un hombro y «pensar en algo bonito». Piensas en las alianzas. No sale bonito.'],
+  ['vera', 'Listo. Sales guapo y aterrado, que es justo lo que pide una boda.', 'smile'],
+], 'ines1');
+
+scene('vera1c', { bg: 'patio', keepChars: true }, [
+  ['vera', 'Vale, vale. Ya te pillaré luego, testigo. Siempre los pillo.', 'neutral'],
+], 'ines1');
+
+scene('ines1', { bg: 'patio', chars: [['ines', 'left', 'neutral']] }, [
+  [N, 'Y entonces la ves. Vestido granate, el pelo suelto y esa forma de morderse el labio cuando está nerviosa.'],
+  [N, 'Inés. Cuatro años juntos en la universidad. Cinco sin dirigiros la palabra.'],
+  ['ines', 'Vaya. Sigues sin saber hacerte el nudo de la corbata.', 'smirk'],
+  [YO, 'Inés. No sabía que venías.'],
+  ['ines', 'Lucía es mi prima, {n}. Lo raro sería que no viniera. Lo que no sabía es que el testigo eras tú. Pobre Rober.', 'smirk'],
+], choice(
+  { t: '«Estás guapísima. Como siempre.»', fx: { ines: 2 }, go: 'ines1a' },
+  { t: '«¿Sigues enfadada por lo de Lisboa?»', fx: { ines: 1 }, set: { lisboa: true }, go: 'ines1b' },
+  { t: '«Mira, hoy no es día para dramas.»', fx: { ines: -1 }, go: 'ines1c' },
+));
+
+scene('ines1a', { bg: 'patio', keepChars: true }, [
+  ['ines', 'No empieces.', 'blush'],
+  ['ines', '...Pero gracias. Tú estás... pasable.', 'smile'],
+], 'remedios1');
+
+scene('ines1b', { bg: 'patio', keepChars: true }, [
+  ['ines', '¿Lo de Lisboa? ¿El viaje en el que perdiste los billetes, el hotel y mi paciencia?', 'surprised'],
+  ['ines', 'No estoy enfadada. Lo tengo archivado. Que no es lo mismo.', 'smirk'],
+], 'remedios1');
+
+scene('ines1c', { bg: 'patio', keepChars: true }, [
+  ['ines', 'Tranquilo, no he venido a por ti. He venido a por el cóctel.', 'angry'],
+], 'remedios1');
+
+scene('remedios1', { bg: 'patio', clock: 'Sábado · 17:35', chars: [['remedios', 'center', 'smile']] }, [
+  [N, 'Una señora de ochenta y tantos, abanico en mano, te agarra del brazo con una fuerza sorprendente.'],
+  ['remedios', '¡Tú eres el amigo del novio! El que anoche iba cantando por el pasillo a las cuatro de la mañana.', 'smile'],
+  [YO, '¿Yo... cantaba?'],
+  ['remedios', 'Cantabas. Y muy mal. Y llevabas una cajita en la mano que se te cayó tres veces: una en la bodega, otra en el corral, y otra no sé dónde, que yo ya me fui a la cama.', 'smirk'],
+  [YO, '¡La cajita! ¿Dónde está?'],
+  ['remedios', 'Ay, hijo, yo qué sé. A mi edad solo guardo las cosas en un sitio.', 'smirk'],
+  [N, 'Se da dos golpecitos en el escote, te guiña un ojo y se aleja abanicándose.'],
+  { who: N, text: 'Dos pistas: la bodega y el corral. Y una abuela que guarda las cosas donde nadie se atreve a mirar.', show: [] },
+  [N, 'Solo no vas a llegar a tiempo. Necesitas ayuda. ¿A quién se la pides?'],
+], choice(
+  { t: 'A Carmen. Si alguien sabe dónde está cada cosa en este cortijo, es ella.', fx: { carmen: 1 }, go: 'bodegaCarmen' },
+  { t: 'A Vera. Lleva toda la tarde haciendo fotos: igual sale la cajita en alguna.', fx: { vera: 1 }, go: 'corralVera' },
+  { t: 'A Inés. Te conoce mejor que nadie, incluida tu manera de perder las cosas.', fx: { ines: 1 }, go: 'bodegaInes' },
+));
+
+/* ---------------- The search, with one of them ---------------- */
+
+scene('bodegaCarmen', { bg: 'bodega', clock: 'Sábado · 17:48', fade: true, chars: [['carmen', 'center', 'angry']] }, [
+  ['carmen', '¿Que has perdido QUÉ?', 'angry'],
+  [YO, 'Técnicamente no las he perdido. Están en algún sitio. Lo que no sé es en cuál.'],
+  ['carmen', 'Si mi hermana se entera, te entierro en el olivar y te planto un limonero encima.', 'angry'],
+  [N, 'Aun así, coge una linterna y baja contigo a la bodega. Hace fresco y huele a roble y a vino viejo.'],
+  ['carmen', 'Agáchate. Mira debajo de esos toneles. No, debajo. Más abajo. ¿Siempre eres tan torpe con las manos?', 'neutral'],
+], choice(
+  { t: '«Depende de lo que tenga entre ellas.»', fx: (st) => ({ carmen: st.flags.carmenFlirt ? 2 : 1 }), go: 'bodegaCarmenA' },
+  { t: '«Solo cuando me miran tan de cerca.»', fx: { carmen: 1 }, go: 'bodegaCarmenB' },
+  { t: '«Oye, sin insultar, ¿eh?»', go: 'bodegaCarmenC' },
+));
+
+scene('bodegaCarmenA', { bg: 'bodega', keepChars: true }, [
+  ['carmen', '...', 'surprised'],
+  ['carmen', 'Busca, anda. Y no me mires así.', 'blush'],
+  [N, 'Lo dice sin enfadarse. Y sin dejar de mirarte.'],
+], 'bodegaCarmenEnd');
+scene('bodegaCarmenB', { bg: 'bodega', keepChars: true }, [
+  ['carmen', 'Pues acostúmbrate. Hoy te voy a mirar muy de cerca. Para que no la líes más.', 'smirk'],
+], 'bodegaCarmenEnd');
+scene('bodegaCarmenC', { bg: 'bodega', keepChars: true }, [
+  ['carmen', 'No es un insulto. Es un diagnóstico.', 'neutral'],
+], 'bodegaCarmenEnd');
+
+scene('bodegaCarmenEnd', { bg: 'bodega', keepChars: true }, [
+  [N, 'Al fondo, junto al tonel más viejo, encontráis el estuche de las alianzas. Abierto. Vacío. Con una marca de carmín en la tapa.'],
+  ['carmen', 'Ese carmín es el de la abuela. Rojo pasión, de 1967. Ya no lo fabrican: lo compra en una tienda de Triana que solo abre los martes.', 'surprised'],
+  ['carmen', 'Así que fue ella. Claro que fue ella.', 'smile'],
+  [N, 'Por primera vez en todo el día, Carmen se ríe. Una risa grande, sin carpeta.'],
+  [YO, 'Deberías reírte más a menudo.'],
+  ['carmen', 'Y tú deberías perder menos cosas. Venga, a por la abuela.', 'blush'],
+], 'remedios2');
+
+scene('corralVera', { bg: 'corral', clock: 'Sábado · 17:48', fade: true, chars: [['vera', 'right', 'smile']] }, [
+  ['vera', 'He repasado las fotos de anoche. Mira esta: tú, a las tres y media de la mañana, abrazado a una cabra.', 'smile'],
+  [YO, 'No.'],
+  ['vera', 'Sí. Y la cabra lleva tu corbata. Y tú llevas la cajita en la boca, como un perro con un hueso. Es mi mejor foto del año.', 'smirk'],
+  [N, 'En el corral, una cabra blanca os observa con una calma muy sospechosa. Lleva un lazo rojo al cuello.'],
+  ['vera', 'Se llama Paquita. Te presento a tu cita de anoche.', 'smirk'],
+], choice(
+  { t: '«Mi cita de anoche no tenía tus ojos.»', fx: { vera: 2 }, go: 'corralVeraA' },
+  { t: '«Paquita y yo solo somos amigos.»', fx: { vera: 1 }, go: 'corralVeraB' },
+  { t: '«¿Le vas a enseñar esa foto a alguien?»', go: 'corralVeraC' },
+));
+
+scene('corralVeraA', { bg: 'corral', keepChars: true }, [
+  ['vera', 'Uf. Eso ha sido cursi. Muy cursi.', 'blush'],
+  ['vera', 'Repítelo luego, que lo quiero grabar.', 'smirk'],
+], 'corralVeraEnd');
+scene('corralVeraB', { bg: 'corral', keepChars: true }, [
+  ['vera', 'Eso dicen todos al día siguiente.', 'smile'],
+], 'corralVeraEnd');
+scene('corralVeraC', { bg: 'corral', keepChars: true }, [
+  ['vera', 'Depende de lo bien que te portes esta noche.', 'smirk'],
+], 'corralVeraEnd');
+
+scene('corralVeraEnd', { bg: 'corral', keepChars: true }, [
+  [N, 'Os metéis en el corral. Paquita se aparta con dignidad... y algo brilla entre la paja.'],
+  [N, 'Os agacháis a la vez a cogerlo. Cabezazo. Acabáis los dos sentados en la paja, muy juntos, con una cabra mirándoos.'],
+  ['vera', 'Esto no sale en el álbum.', 'blush'],
+  [YO, '¿El qué?'],
+  ['vera', 'Lo cerca que estás.', 'smirk'],
+  [N, 'Te enseña lo que ha encontrado: el envoltorio de un caramelo de violeta. De esos que solo comen las abuelas.'],
+  ['vera', 'La cabra no tiene tus anillos, testigo. Los tiene alguien con mejor gusto para los dulces.', 'smile'],
+], 'remedios2');
+
+scene('bodegaInes', { bg: 'bodega', clock: 'Sábado · 17:48', fade: true, chars: [['ines', 'left', 'neutral']] }, [
+  ['ines', 'Repasemos. Anoche bebiste. Cantaste. Y cuando bebes y cantas, guardas las cosas en sitios absurdos. En Lisboa metiste los pasaportes en la nevera.', 'neutral'],
+  [YO, 'Los pasaportes estaban fresquitos.'],
+  ['ines', 'Idiota.', 'smile'],
+  [N, 'Lo dice como lo decía antes. Con cariño.'],
+  [N, 'Bajáis a la bodega. La puerta se cierra a vuestra espalda con un golpe seco.'],
+  ['ines', 'No. No, no, no. Dime que esa puerta se abre desde dentro.', 'surprised'],
+  [N, 'No se abre desde dentro.'],
+  ['ines', 'Cinco años sin verte y a la media hora ya estamos encerrados en un sótano.', 'angry'],
+], choice(
+  { t: '«Hay sitios peores para estar encerrado contigo.»', fx: { ines: 2 }, go: 'bodegaInesA' },
+  { t: '«Tranquila, alguien vendrá. Mientras, buscamos.»', fx: { ines: 1 }, go: 'bodegaInesB' },
+  { t: '«Como en los viejos tiempos: tú gritas y yo me agobio.»', go: 'bodegaInesC' },
+));
+
+scene('bodegaInesA', { bg: 'bodega', keepChars: true }, [
+  ['ines', 'No hagas eso.', 'blush'],
+  [YO, '¿El qué?'],
+  ['ines', 'Decir cosas bonitas en sitios oscuros. Siempre te funcionaba.', 'blush'],
+], 'bodegaInesEnd');
+scene('bodegaInesB', { bg: 'bodega', keepChars: true }, [
+  ['ines', 'Vale. Pero si nos quedamos aquí hasta la ceremonia, el tonel te lo bebes tú solo.', 'neutral'],
+], 'bodegaInesEnd');
+scene('bodegaInesC', { bg: 'bodega', keepChars: true }, [
+  ['ines', 'Tú te agobias, yo grito y al final nos reímos. Sí, me acuerdo.', 'smirk'],
+], 'bodegaInesEnd');
+
+scene('bodegaInesEnd', { bg: 'bodega', keepChars: true }, [
+  [N, 'Detrás de un tonel encontráis el estuche de las alianzas. Vacío. Dentro hay un pañuelo bordado con una R.'],
+  ['ines', 'La abuela Remedios. Claro. Cuando yo era pequeña me escondía los caramelos en el sujetador para que no me los comiera de golpe.', 'smile'],
+  [YO, '¿En el...?'],
+  ['ines', 'Ahí guarda lo importante. Ahí estarán tus anillos.', 'smirk'],
+  [N, 'La puerta se abre de golpe. Un camarero con dos cajas de cava os mira, mira lo poco que os separa, y se va sin decir nada.'],
+  ['ines', 'Genial. Ahora todo el cáterin cree que tú y yo...', 'blush'],
+  [YO, '¿Que tú y yo qué?'],
+  ['ines', 'Nada. Vamos.', 'blush'],
+], 'remedios2');
+
+scene('remedios2', { bg: 'patio', clock: 'Sábado · 18:41', fade: true, chars: [['remedios', 'center', 'smirk']] }, [
+  [N, 'Encontráis a la abuela Remedios bajo un naranjo, abanicándose con un vasito de fino en la otra mano.'],
+  ['remedios', 'Hombre, el cantante. ¿Vienes a por lo tuyo?', 'smirk'],
+  [YO, 'Abuela, por favor. Las alianzas. Las tiene usted, ¿verdad?'],
+  ['remedios', 'Las tengo a buen recaudo, que anoche ibas sembrándolas por todo el cortijo. Pero gratis no te las doy.', 'smirk'],
+], choice(
+  { t: '«Le canto algo. Pero esta vez afinado.»', set: { song: true }, go: 'remediosSong' },
+  { t: '«La saco a bailar en la fiesta. La primera rumba es suya.»', set: { remediosDance: true }, go: 'remediosDance' },
+  { t: '«Abuela, que se casa su nieta. Por favor.»', go: 'remediosPlease' },
+));
+
+scene('remediosSong', { bg: 'patio', keepChars: true }, [
+  ['remedios', 'Anoche cantaste «Si me dejas ahora». Quiero la versión buena.', 'smile'],
+  [N, 'Le cantas el estribillo. Media docena de invitados se giran. Uno aplaude por pena.'],
+  ['remedios', 'Peor que anoche. Pero con más corazón. Toma.', 'smile'],
+], 'remediosGive');
+scene('remediosDance', { bg: 'patio', keepChars: true }, [
+  ['remedios', '¡Eso! Que hace años que no me saca a bailar un hombre de menos de setenta. Trato hecho. Y no me pises.', 'smile'],
+], 'remediosGive');
+scene('remediosPlease', { bg: 'patio', keepChars: true }, [
+  ['remedios', 'Uy, qué soso. Bueno, que no se diga.', 'neutral'],
+], 'remediosGive');
+
+scene('remediosGive', { bg: 'patio', keepChars: true }, [
+  [N, 'Se mete la mano en el escote con toda la naturalidad del mundo, rebusca un poco y saca un pañuelito anudado. Dentro están las dos alianzas. Calentitas.'],
+  ['remedios', 'Y ahora, cuidado con ellas. Lo que se guarda en el pecho no se pierde. Pregúntaselo a cualquier mujer de esta boda.', 'smirk'],
+  [N, 'Te guiña un ojo. No sabes muy bien qué ha querido decir. Sospechas que demasiado.'],
+], 'ceremonia');
+
+/* ---------------- Act 2: ceremony and banquet ---------------- */
+
+scene('ceremonia', { bg: 'ceremonia', clock: 'Sábado · 19:00', fade: true, chars: [['rober', 'left', 'blush'], ['lucia', 'right', 'smile']] }, [
+  [N, 'A las siete en punto, bajo el olivo centenario, Lucía avanza del brazo de su padre. Rober llora antes de que llegue a la mitad del pasillo.'],
+  ['rober', '{n}... los anillos...', 'blush'],
+  [N, 'Se los das. Rober te aprieta la mano tan fuerte que casi te disloca un dedo.'],
+  ['lucia', 'Sí, quiero.', 'smile'],
+  ['rober', 'Sí, quiero. Muchísimo.', 'smile'],
+  [N, 'Aplausos, arroz, pétalos y un primo que grita «¡que se besen!» con tres segundos de adelanto. Lo has conseguido.'],
+  { who: N, text: (st) => aff(st, 'carmen') >= 3 ? 'En primera fila, Carmen te hace un gesto con la carpeta: «bien hecho». Casi sonríe.' : 'Carmen tacha algo en su carpeta. Esperas que no sea tu nombre.', show: [['carmen', 'left', 'neutral']] },
+  { who: N, text: (st) => aff(st, 'vera') >= 3 ? 'Vera baja la cámara un segundo para guiñarte un ojo.' : 'Vera fotografía el beso. A ti ni te enfoca.', show: [['vera', 'center', 'smirk']] },
+  { who: N, text: (st) => aff(st, 'ines') >= 3 ? 'Inés se seca una lágrima y, cuando te pilla mirándola, no aparta la vista.' : 'Inés aplaude a los novios sin mirarte.', show: [['ines', 'right', 'neutral']] },
+], 'banquete');
+
+scene('banquete', { bg: 'banquete', clock: 'Sábado · 21:40', fade: true, chars: [] }, [
+  [N, 'El banquete. Jamón, langostinos, un solomillo que se deshace en la boca y un vino que va a dar problemas.'],
+  [N, 'Llega el discurso del testigo. Doscientas personas te miran. Rober te mira. La abuela Remedios te mira por encima de las gafas.'],
+  [N, '¿Qué discurso das?'],
+], choice(
+  { t: 'Emotivo: cuentas cómo Rober te sacó de tu peor año.', fx: { carmen: 2, ines: 1 }, go: 'speechHeart' },
+  { t: 'Gracioso: cuentas lo de anoche y la cabra Paquita.', fx: { vera: 2 }, go: 'speechFunny' },
+  { t: 'Arriesgado: cuentas que Rober conoció a Lucía en una cita doble... contigo y con Inés.', fx: { ines: 2, carmen: -1 }, go: 'speechInes' },
+));
+
+scene('speechHeart', { bg: 'banquete', keepChars: false }, [
+  [N, 'Hablas de cuando se te vino todo abajo y Rober aparecía cada domingo con croquetas de su madre y una película malísima. No lo traías preparado. Te sale solo.'],
+  [N, 'Al final se te quiebra la voz. Durante un segundo no se oye ni un tenedor. Luego, un aplauso enorme.'],
+  { who: N, text: 'Carmen se ha quitado el pinganillo. Tiene los ojos brillantes y finge que es por el cava.', show: [['carmen', 'center', 'blush']] },
+], 'baile');
+
+scene('speechFunny', { bg: 'banquete', keepChars: false }, [
+  [N, 'Cuentas lo de anoche: la despedida, la canción, la cabra y la corbata. Enseñas la foto de Vera en el móvil. El banquete entero se cae de la silla.'],
+  [N, 'El tío Paco se ríe tan fuerte que se le sale el langostino por la nariz. Nadie lo olvidará jamás.'],
+  { who: N, text: 'Desde la mesa de proveedores, Vera levanta su copa y te vocaliza un «me debes una» muy, muy lento.', show: [['vera', 'center', 'smirk']] },
+], 'baile');
+
+scene('speechInes', { bg: 'banquete', keepChars: false }, [
+  [N, 'Cuentas lo de la cita doble: Rober y Lucía se gustaron en el primer café, mientras Inés y tú os pasabais la tarde discutiendo qué película ver... y luego tres años sin poder separaros.'],
+  [N, 'Carmen te fulmina con la mirada desde la mesa presidencial: eso no estaba en el guion.'],
+  { who: N, text: 'Inés se tapa la cara con la servilleta. Media mesa se gira hacia ella. Cuando la baja, se está riendo. Y te está mirando a ti.', show: [['ines', 'center', 'blush']] },
+], 'baile');
+
+/* ---------------- Act 3: the night ---------------- */
+
+scene('baile', { bg: 'baile', clock: 'Domingo · 00:15', fade: true, chars: [] }, [
+  { who: N, text: (st) => st.flags.remediosDance
+      ? 'Medianoche. Suena una rumba y la abuela Remedios viene a cobrar su baile. Te lleva ella, baila mejor que tú y al terminar te susurra: «Ahora ve a por la que te gusta, que yo ya estoy mayor para celos».'
+      : 'Medianoche. Rober y Lucía abren el baile con una rumba y en dos canciones la pista está a reventar.',
+    show: [] },
+  [N, 'Hay tres mujeres en esta boda que hoy te han complicado el día. Y te lo han alegrado.'],
+  [N, '¿A quién sacas a bailar?'],
+], choice(
+  { t: 'A Carmen.', go: 'routeCarmen' },
+  { t: 'A Vera.', go: 'routeVera' },
+  { t: 'A Inés.', go: 'routeInes' },
+  { t: 'A nadie: te vas a la barra con Rober y los tíos del pueblo.', go: 'endPaquita' },
+));
+
+/* Carmen */
+
+scene('routeCarmen', { bg: 'baile', chars: [['carmen', 'center', 'surprised']] }, [
+  ['carmen', '¿Yo? Estoy trabajando.', 'surprised'],
+  [YO, 'Llevas trabajando desde las ocho de la mañana. La boda ya está hecha. Y ha salido perfecta.'],
+  ['carmen', 'Casi perfecta. Alguien perdió las alianzas.', 'smirk'],
+  [YO, 'Y alguien las encontró. Una rumba. Solo una.'],
+  [N, 'Se lo piensa tres segundos. Luego deja la carpeta encima de un altavoz.'],
+  [N, 'Carmen baila como organiza: decidida y marcando ella el paso. A la segunda vuelta ya no lleva el pinganillo. A la tercera se suelta el moño.'],
+  ['carmen', 'No se lo cuentes a nadie. Tengo una reputación.', 'smile'],
+], choice(
+  { t: '«¿De sargento?»', go: 'carmenDanceA' },
+  { t: '«Tu secreto está a salvo. Lo de que me miras la boca cuando hablo, eso sí lo cuento.»', fx: { carmen: 2 }, go: 'carmenDanceB' },
+  { t: 'Acercarla un poco más, sin decir nada.', fx: { carmen: 1 }, go: 'carmenDanceC' },
+));
+
+scene('carmenDanceA', { bg: 'baile', keepChars: true }, [
+  ['carmen', 'De eficiente. Lo de sargento lo reservo para los testigos que llegan tarde.', 'smirk'],
+], 'carmenTerrace');
+scene('carmenDanceB', { bg: 'baile', keepChars: true }, [
+  ['carmen', 'Yo no te miro la...', 'surprised'],
+  ['carmen', 'Bueno. Un poco. Tienes una boca que habla demasiado y alguien tenía que vigilarla.', 'blush'],
+], 'carmenTerrace');
+scene('carmenDanceC', { bg: 'baile', keepChars: true }, [
+  [N, 'No se aparta. Apoya la frente en tu hombro un momento. Solo un momento.'],
+  ['carmen', 'Hueles a cabra.', 'blush'],
+  [YO, 'Es colonia de Paquita. Edición limitada.'],
+], 'carmenTerrace');
+
+scene('carmenTerrace', { bg: 'terraza', clock: 'Domingo · 02:10', fade: true, chars: [['carmen', 'center', 'neutral']] }, [
+  [N, 'Más tarde, en la terraza, lejos de la música. Carmen se ha quitado los tacones y los lleva colgando de una mano.'],
+  ['carmen', '¿Sabes cuál es mi problema? Que lo organizo todo. Las bodas de los demás, las vacaciones de los demás, la vida de los demás. Y la mía la tengo en una carpeta sin abrir.', 'sad'],
+], choice(
+  { t: '«Pues ábrela. Empieza por esta noche.»', fx: { carmen: 2 }, go: 'carmenTerraceA' },
+  { t: '«A mí me gusta que lo controles todo. Da mucha paz.»', fx: { carmen: 1 }, go: 'carmenTerraceB' },
+  { t: '«Deberías irte a dormir, ha sido un día muy largo.»', fx: { carmen: -2 }, go: 'carmenTerraceC' },
+));
+
+scene('carmenTerraceA', { bg: 'terraza', keepChars: true }, [
+  ['carmen', '¿Y qué pongo en la primera página?', 'smirk'],
+  [YO, '«No planificar nada.»'],
+  ['carmen', '...', 'blush'],
+  [N, 'Te besa ella. Claro que te besa ella: no iba a dejar algo tan importante en manos de un testigo.'],
+], (st) => aff(st, 'carmen') >= 6 ? 'carmenNight' : 'carmenFriend');
+scene('carmenTerraceB', { bg: 'terraza', keepChars: true }, [
+  ['carmen', 'Eres el primero que me lo dice sin ironía.', 'smile'],
+  [N, 'Te coge la mano. Te la aprieta. No te la suelta.'],
+], (st) => aff(st, 'carmen') >= 6 ? 'carmenNight' : 'carmenFriend');
+scene('carmenTerraceC', { bg: 'terraza', keepChars: true }, [
+  ['carmen', 'Sí. Tienes razón.', 'sad'],
+], 'carmenFriend');
+
+scene('carmenNight', { bg: 'pasillo', clock: 'Domingo · 02:40', fade: true, chars: [['carmen', 'center', 'blush']] }, [
+  [N, 'El pasillo de las habitaciones huele a jazmín. Carmen se para delante de una puerta y saca la llave sin mirarte.'],
+  ['carmen', 'Tengo una norma: nunca subo a nadie a mi habitación en una boda que he organizado yo.', 'smirk'],
+  [YO, 'Me parece una norma muy sensata.'],
+  ['carmen', 'Por eso esta noche me la voy a saltar. Por una vez, el plan lo haces tú.', 'blush'],
+  { who: N, text: 'La puerta se cierra. Lo que pasó después no viene en ninguna carpeta.', bg: 'black', show: [] },
+  { who: N, text: 'A la mañana siguiente bajas a desayunar con la camisa mal abrochada. Carmen ya está allí, impecable, con su carpeta.', bg: 'manana', clock: 'Domingo · 09:30', show: [['carmen', 'center', 'smirk']] },
+  ['carmen', 'Llegas tarde. Otra vez.', 'smirk'],
+  [N, 'En la primera página, debajo de «Boda de Lucía: completada», hay una línea nueva escrita a mano: «{n}: pendiente de repetir».'],
+], { ending: 'carmen' });
+
+scene('carmenFriend', { bg: 'terraza', keepChars: true }, [
+  ['carmen', 'Ha sido una noche bonita. Gracias por sacarme a bailar, testigo.', 'smile'],
+  [N, 'Te da un beso en la mejilla, recoge sus tacones y se va. Te quedas mirando las estrellas y pensando en todo lo que podrías haber dicho.'],
+], { ending: 'casi' });
+
+/* Vera */
+
+scene('routeVera', { bg: 'baile', chars: [['vera', 'center', 'surprised']] }, [
+  ['vera', '¿Bailar? Yo estoy trabajando. Soy la que hace fotos a los que bailan.', 'surprised'],
+  [YO, 'Pues esta noche sales tú en una.'],
+  [N, 'Le quitas la cámara del cuello con cuidado y se la cuelgas a Rober, que se pone a hacer fotos borrosas a todo el mundo.'],
+  ['vera', 'Si me rompe el objetivo, te cobro el objetivo y la indemnización emocional.', 'smile'],
+  [N, 'Vera baila fatal. Fatal de verdad. Pero se ríe tanto que da igual.'],
+], choice(
+  { t: '«Bailas fatal.»', fx: { vera: 1 }, go: 'veraDanceA' },
+  { t: '«Enséñame a hacer fotos y yo te enseño a bailar.»', fx: { vera: 2 }, go: 'veraDanceB' },
+  { t: '«Perdona, tengo que ir a ayudar a Rober.»', fx: { vera: -2 }, go: 'veraDanceC' },
+));
+
+scene('veraDanceA', { bg: 'baile', keepChars: true }, [
+  ['vera', 'Lo sé. Es mi encanto. Tú bailas regular y no tienes encanto.', 'smirk'],
+  [YO, 'Eso duele.'],
+  ['vera', 'Pues aguanta, que ahora viene la lenta.', 'smile'],
+], 'veraPool');
+scene('veraDanceB', { bg: 'baile', keepChars: true }, [
+  ['vera', 'Trato hecho. Pero empiezo yo. Y mis clases son... muy prácticas.', 'smirk'],
+], 'veraPool');
+scene('veraDanceC', { bg: 'baile', keepChars: true }, [
+  ['vera', 'Ah. Vale. Claro.', 'sad'],
+], 'veraPool');
+
+scene('veraPool', { bg: 'piscina', clock: 'Domingo · 01:50', fade: true, chars: [['vera', 'center', 'smirk']] }, [
+  [N, 'Más tarde, Vera te arrastra hasta la piscina. «La luz de las farolas en el agua es la mejor del cortijo», dice. Lleva la cámara y una botella de cava robada de la barra.'],
+  ['vera', 'Ponte ahí. En el borde. Un poco más atrás. Un poquito más...', 'smirk'],
+  [N, 'Lo ves venir un segundo tarde. Un empujoncito y acabas en la piscina vestido de testigo, corbata incluida.'],
+  ['vera', '¡Esa! ¡Esa es la foto del año! Lo siento por Paquita, ya tiene sustituto.', 'smile'],
+], choice(
+  { t: 'Tirarla al agua contigo.', fx: { vera: 2 }, go: 'veraPoolA' },
+  { t: '«Esta me la pagas.» Salir empapado y con toda la dignidad posible.', fx: { vera: 1 }, go: 'veraPoolB' },
+  { t: 'Enfadarte de verdad.', fx: { vera: -2 }, go: 'veraPoolC' },
+));
+
+scene('veraPoolA', { bg: 'piscina', keepChars: true }, [
+  [N, 'Le coges la mano antes de que se aparte. Vera deja la cámara en una tumbona con reflejos de profesional y cae al agua contigo, gritando.'],
+  ['vera', '¡Está helada!', 'surprised'],
+  [YO, 'Pues acércate.'],
+  ['vera', 'Es lo más cursi y lo más eficaz que me han dicho nunca.', 'blush'],
+  [N, 'Os besáis en mitad de la piscina, empapados, con la música de fondo y un camarero que finge no ver nada.'],
+], (st) => aff(st, 'vera') >= 6 ? 'veraNight' : 'veraFriend');
+scene('veraPoolB', { bg: 'piscina', keepChars: true }, [
+  ['vera', 'Te la pago cuando quieras. Por cierto, tengo un albornoz de sobra en la habitación. Para que no te constipes. Por pura responsabilidad.', 'smirk'],
+], (st) => aff(st, 'vera') >= 6 ? 'veraNight' : 'veraFriend');
+scene('veraPoolC', { bg: 'piscina', keepChars: true }, [
+  ['vera', 'Vale. Era una broma. Lo siento.', 'sad'],
+], 'veraFriend');
+
+scene('veraNight', { bg: 'pasillo', clock: 'Domingo · 02:30', fade: true, chars: [['vera', 'center', 'smirk']] }, [
+  ['vera', 'Mi habitación es esa. Tengo albornoces, toallas y un carrete sin estrenar.', 'smirk'],
+  [YO, '¿Me vas a hacer fotos?'],
+  ['vera', 'Esta noche no hago fotos, testigo. Esta noche no quiero perderme nada mirando por un visor.', 'blush'],
+  { who: N, text: 'Apaga la luz del pasillo con el codo. Lo que pasó después no salió en el álbum.', bg: 'black', show: [] },
+  { who: N, text: 'En el desayuno, Vera te pasa una foto: tú, dormido, abrazado a la almohada... con su sombrero puesto.', bg: 'manana', clock: 'Domingo · 10:05', show: [['vera', 'center', 'smile']] },
+  ['vera', 'Es para mi colección privada. La pública ya la tiene Paquita.', 'smile'],
+], { ending: 'vera' });
+
+scene('veraFriend', { bg: 'piscina', keepChars: true }, [
+  ['vera', 'Me lo he pasado bien, testigo. Pero mañana tengo otra boda en Jerez y, si no duermo, saco a los novios con los ojos cerrados.', 'neutral'],
+  [N, 'Te da un beso rápido en la mejilla y desaparece con su cámara.'],
+], { ending: 'casi' });
+
+/* Inés */
+
+scene('routeInes', { bg: 'baile', chars: [['ines', 'center', 'surprised']] }, [
+  ['ines', '¿Me estás sacando a bailar? ¿Tú? ¿El que en la universidad decía que bailar era «mover los brazos con ansiedad»?', 'surprised'],
+  [YO, 'He madurado.'],
+  ['ines', 'Eso ya lo veremos.', 'smirk'],
+  [N, 'Empieza a sonar una canción que conocéis los dos. La de aquel verano. No sabes quién la ha pedido. Sospechas de la abuela.'],
+  ['ines', 'Esto es una encerrona.', 'blush'],
+], choice(
+  { t: '«Es nuestra canción.»', fx: { ines: 2 }, go: 'inesDanceA' },
+  { t: '«Si quieres, paramos.»', fx: { ines: 1 }, go: 'inesDanceB' },
+  { t: 'Hacer una broma sobre Lisboa.', fx: (st) => ({ ines: st.flags.lisboa ? 1 : -1 }), go: 'inesDanceC' },
+));
+
+scene('inesDanceA', { bg: 'baile', keepChars: true }, [
+  ['ines', 'No tenemos canción.', 'blush'],
+  [YO, 'Tenemos esta.'],
+  ['ines', '...Vale. Tenemos esta.', 'smile'],
+], 'inesGrove');
+scene('inesDanceB', { bg: 'baile', keepChars: true }, [
+  ['ines', 'No. Calla y baila.', 'smirk'],
+], 'inesGrove');
+scene('inesDanceC', { bg: 'baile', keepChars: true }, [
+  [YO, 'Tranquila, esta vez no llevo billetes encima. No hay nada que perder.'],
+  { who: 'ines', text: (st) => st.flags.lisboa ? 'Ya has sacado Lisboa dos veces hoy. Empiezo a pensar que quieres volver.' : 'Qué gracioso. Cinco años y sigues con el mismo chiste.', mood: 'smirk' },
+], 'inesGrove');
+
+scene('inesGrove', { bg: 'olivar', clock: 'Domingo · 02:00', fade: true, chars: [['ines', 'center', 'neutral']] }, [
+  [N, 'Os escapáis al olivar. Hay luciérnagas, que es algo que no sabías que hubiera en Sevilla.'],
+  ['ines', '¿Por qué no me llamaste? Después de lo nuestro. Cinco años, {n}.', 'sad'],
+], choice(
+  { t: '«Porque me daba miedo que no contestaras. Y más miedo que sí.»', fx: { ines: 2 }, go: 'inesGroveA' },
+  { t: '«Porque fui un idiota. No tengo una excusa mejor.»', fx: { ines: 2 }, go: 'inesGroveB' },
+  { t: '«Tú tampoco me llamaste.»', fx: { ines: -1 }, go: 'inesGroveC' },
+));
+
+scene('inesGroveA', { bg: 'olivar', keepChars: true }, [
+  ['ines', 'Habría contestado. A la segunda. Para que sufrieras un poco.', 'blush'],
+], (st) => aff(st, 'ines') >= 6 ? 'inesNight' : 'inesFriend');
+scene('inesGroveB', { bg: 'olivar', keepChars: true }, [
+  ['ines', 'Es la mejor excusa que he oído nunca. Porque es verdad.', 'smile'],
+], (st) => aff(st, 'ines') >= 6 ? 'inesNight' : 'inesFriend');
+scene('inesGroveC', { bg: 'olivar', keepChars: true }, [
+  ['ines', 'Ya. Es verdad. Los dos fuimos igual de cabezotas.', 'sad'],
+], 'inesFriend');
+
+scene('inesNight', { bg: 'olivar', keepChars: true }, [
+  [N, 'Inés se acerca. Te arregla la corbata, como antes. Esta vez no la suelta.'],
+  ['ines', 'Tengo una habitación con vistas al olivar. Y una norma nueva.', 'smirk'],
+  [YO, '¿Cuál?'],
+  ['ines', 'Esta vez nadie pierde los billetes.', 'blush'],
+  { who: N, text: 'Subís por la escalera de servicio para que nadie os vea. Os ve todo el mundo. A nadie le sorprende.', bg: 'pasillo', show: [] },
+  { who: N, text: 'La puerta se cierra. Cinco años se recuperan antes de lo que pensabas.', bg: 'black' },
+  { who: N, text: 'En el desayuno, Inés te roba un churro del plato, como hacía antes.', bg: 'manana', clock: 'Domingo · 10:20', show: [['ines', 'center', 'smile']] },
+  ['ines', 'He mirado vuelos a Lisboa para el mes que viene. Los billetes los llevo yo.', 'smile'],
+], { ending: 'ines' });
+
+scene('inesFriend', { bg: 'olivar', keepChars: true }, [
+  ['ines', 'Me alegro de haberte visto, {n}. De verdad. Pero creo que lo nuestro se quedó en aquel verano.', 'sad'],
+  [N, 'Te abraza un rato largo. Luego vuelve a la fiesta. Las luciérnagas siguen a lo suyo.'],
+], { ending: 'casi' });
+
+/* The bar */
+
+scene('endPaquita', { bg: 'banquete', chars: [['rober', 'center', 'smile']] }, [
+  [N, 'Te vas a la barra con Rober, su tío Paco y cuatro primos de Écija. Alguien pide chupitos de orujo. Luego alguien pide más.'],
+  ['rober', '¡Por el mejor testigo del mundo! ¡Que casi me arruina la vida!', 'smile'],
+  [N, 'Lo último que recuerdas es cantar «Si me dejas ahora» a dúo con el tío Paco.'],
+  { who: N, text: 'Te despiertas en el corral con la boca seca y la camisa del revés. Paquita te mira con ternura. Vuelve a llevar tu corbata.', bg: 'corral', clock: 'Domingo · 08:10', show: [], fade: true },
+  [N, 'Desde una ventana, tres mujeres te miran y se ríen. Una de ellas te hace una foto.'],
+], { ending: 'paquita' });
+
+const ENDINGS = {
+  carmen: { title: 'La carpeta abierta', text: 'Has conquistado a la mujer que lo tenía todo bajo control. Y le has enseñado a soltarlo.' },
+  vera: { title: 'Revelado nocturno', text: 'La fotógrafa que lo veía todo a través de un visor por fin dejó la cámara.' },
+  ines: { title: 'Segunda parte', text: 'Hay historias que merecen otra oportunidad. Y otro viaje a Lisboa.' },
+  casi: { title: 'Casi', text: 'Ha sido una gran noche. Pero a veces el testigo solo es testigo. Prueba otras respuestas: a cada una le gusta algo distinto.' },
+  paquita: { title: 'Paquita y tú', text: 'Hay amores que no se eligen.' },
+};
+
+/* ======================================================================
+   ENGINE
+   ====================================================================== */
+
+const $ = (id) => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode: no saving */ } },
+};
+
+let st = null;          // game state
+let node = null;        // current node
+let typing = null;      // typewriter timer
+let fullText = '';
+let currentBg = '';
+let shown = [];         // [key, pos, mood]
+
+function newState(name) {
+  return { name: name || 'Dani', id: 'start', aff: { carmen: 0, vera: 0, ines: 0 }, flags: {}, log: [], bg: '', clock: '', chars: [] };
+}
+
+function fmt(text) {
+  const t = typeof text === 'function' ? text(st) : text;
+  return t.replace(/\{n\}/g, st.name);
+}
+
+function setBg(key) {
+  if (key === currentBg) return;
+  currentBg = key;
+  $('bg').innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice">${BG[key]()}</svg>`;
+}
+
+function renderChars(speaker) {
+  const wrap = $('chars');
+  const existing = new Map([...wrap.children].map((el) => [el.dataset.key, el]));
+  const keep = new Set();
+  for (const [key, pos, mood] of shown) {
+    keep.add(key);
+    let el = existing.get(key);
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'char enter';
+      el.dataset.key = key;
+      wrap.appendChild(el);
+      requestAnimationFrame(() => el.classList.remove('enter'));
+    }
+    if (el.dataset.mood !== mood) {
+      el.innerHTML = portrait(key, mood);
+      el.dataset.mood = mood;
+    }
+    el.classList.remove('left', 'center', 'right');
+    el.classList.add(pos);
+    el.classList.toggle('dim', !!speaker && speaker !== key && speaker !== YO);
+  }
+  for (const [key, el] of existing) if (!keep.has(key)) el.remove();
+}
+
+let busy = false;
+function go(id) {
+  const n = S[id];
+  if (!n) { console.error('Missing node', id); return; }
+  // Any change of place fades through black.
+  if (n.bg && currentBg && n.bg !== currentBg) {
+    busy = true;
+    $('fade').style.opacity = '1';
+    setTimeout(() => { show(id); $('fade').style.opacity = '0'; busy = false; }, 650);
+  } else {
+    show(id);
+  }
+}
+
+function show(id) {
+  node = S[id];
+  st.id = id;
+  if (node.bg) setBg(node.bg);
+  if (node.clock) { st.clock = node.clock; }
+  $('clock').textContent = st.clock;
+  if (node.chars) shown = node.chars.map((c) => [...c]);
+  if (node.show) shown = node.show.map((c) => [...c]);
+  if (node.who && node.who !== YO && node.mood) {
+    const c = shown.find((s) => s[0] === node.who);
+    if (c) c[2] = node.mood;
+    else if (CHARS[node.who]) shown.push([node.who, shown.length ? 'right' : 'center', node.mood]);
+  }
+  st.bg = currentBg;
+  st.chars = shown;
+  renderChars(node.who);
+
+  const name = node.who === YO ? st.name : node.who ? CHARS[node.who].name : '';
+  $('name').textContent = name;
+  const text = fmt(node.text);
+  $('text').className = node.who ? '' : 'narration';
+  st.log.push(name ? `<b>${name}:</b> ${text}` : `<i>${text}</i>`);
+  if (st.log.length > 200) st.log.shift();
+  type(text);
+  $('choices').innerHTML = '';
+  store.set('testigo.save', st);
+  sfx.blip();
+}
+
+function type(text) {
+  clearInterval(typing);
+  fullText = text;
+  const el = $('text');
+  el.textContent = '';
+  $('more').style.visibility = 'hidden';
+  let i = 0;
+  typing = setInterval(() => {
+    i += 2;
+    el.textContent = text.slice(0, i);
+    if (i >= text.length) finishTyping();
+  }, 22);
+}
+
+function finishTyping() {
+  clearInterval(typing);
+  typing = null;
+  $('text').textContent = fullText;
+  const next = node.next;
+  if (next && typeof next === 'object' && next.choices) showChoices(next.choices);
+  else $('more').style.visibility = 'visible';
+}
+
+function showChoices(options) {
+  const box = $('choices');
+  box.innerHTML = '';
+  options.filter((o) => !o.if || o.if(st)).forEach((o, i) => {
+    const b = document.createElement('button');
+    b.textContent = `${i + 1}. ${fmt(o.t)}`;
+    b.addEventListener('click', (e) => { e.stopPropagation(); pick(o); });
+    box.appendChild(b);
+  });
+  $('more').style.visibility = 'hidden';
+}
+
+function pick(o) {
+  sfx.pick();
+  st.log.push(`<b>${st.name}</b> → ${fmt(o.t)}`);
+  const fx = typeof o.fx === 'function' ? o.fx(st) : o.fx;
+  if (fx) for (const [k, v] of Object.entries(fx)) {
+    st.aff[k] = (st.aff[k] || 0) + v;
+    if (v > 0) toast(`♥ ${CHARS[k].name} se ha fijado en ti`);
+    else if (v < 0) toast(`${CHARS[k].name} no se lo ha tomado bien`);
+  }
+  if (o.set) Object.assign(st.flags, o.set);
+  $('choices').innerHTML = '';
+  go(o.go);
+}
+
+function advance() {
+  if (!node || busy || !$('log').classList.contains('hidden')) return;
+  if (typing) { finishTyping(); return; }
+  const next = node.next;
+  if (typeof next === 'string') go(next);
+  else if (typeof next === 'function') go(next(st));
+  else if (next && next.ending) end(next.ending);
+}
+
+function end(key) {
+  const e = ENDINGS[key];
+  const found = new Set(store.get('testigo.endings', []));
+  found.add(key);
+  store.set('testigo.endings', [...found]);
+  store.set('testigo.save', null);
+  $('fade').style.opacity = '1';
+  setTimeout(() => {
+    $('endTitle').textContent = e.title;
+    $('endText').textContent = e.text;
+    $('endCount').textContent = `Finales descubiertos: ${found.size} de ${Object.keys(ENDINGS).length}`;
+    $('ending').classList.remove('hidden');
+    $('stage').classList.add('menu');
+    $('fade').style.opacity = '0';
+    sfx.ending();
+  }, 900);
+}
+
+let toastTimer = 0;
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (t.style.opacity = '0'), 1800);
+}
+
+function startGame(saved) {
+  st = saved || newState($('playerName').value.trim());
+  currentBg = '';
+  shown = st.chars || [];
+  $('title').classList.add('hidden');
+  $('ending').classList.add('hidden');
+  $('stage').classList.remove('menu');
+  sfx.start();
+  if (saved) {
+    // Resume on the saved line; restore its scenery first.
+    setBg(saved.bg || S[saved.id].bg || 'patio');
+    st.log = saved.log || [];
+    show(saved.id);
+  } else {
+    go('start');
+  }
+}
+
+/* ---------------- Sound: soft Spanish-guitar arpeggios and UI clicks ---------------- */
+
+const sfx = (() => {
+  let ctx = null, master = null, on = true, loop = null;
+  const init = () => {
+    if (ctx) return;
+    try { ctx = new AudioContext(); } catch { return; }
+    master = ctx.createGain();
+    master.gain.value = 0.25;
+    master.connect(ctx.destination);
+  };
+  const pluck = (freq, when, dur = 1.6, gain = 0.25) => {
+    if (!ctx || !on) return;
+    const o = ctx.createOscillator();
+    const f = ctx.createBiquadFilter();
+    const g = ctx.createGain();
+    o.type = 'triangle';
+    o.frequency.value = freq;
+    f.type = 'lowpass';
+    f.frequency.setValueAtTime(3200, when);
+    f.frequency.exponentialRampToValueAtTime(500, when + dur);
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.exponentialRampToValueAtTime(gain, when + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+    o.connect(f).connect(g).connect(master);
+    o.start(when);
+    o.stop(when + dur + 0.05);
+  };
+  // Andalusian cadence: Am – G – F – E, picked gently.
+  const chords = [[220, 261.6, 329.6], [196, 246.9, 293.7], [174.6, 220, 261.6], [164.8, 207.7, 246.9]];
+  const music = () => {
+    if (!ctx) return;
+    let bar = 0;
+    const playBar = () => {
+      if (!on) return;
+      const t = ctx.currentTime + 0.05;
+      const c = chords[bar % 4];
+      const pattern = [0, 1, 2, 1, 0, 2, 1, 2];
+      pattern.forEach((p, i) => pluck(c[p] * (i % 4 === 0 ? 0.5 : 1), t + i * 0.3, 1.8, i % 4 === 0 ? 0.18 : 0.1));
+      bar++;
+    };
+    playBar();
+    loop = setInterval(playBar, 2400);
+  };
+  return {
+    start() { init(); if (ctx && ctx.state === 'suspended') ctx.resume(); if (!loop) music(); },
+    blip() { if (ctx) pluck(880, ctx.currentTime, 0.12, 0.03); },
+    pick() { if (ctx) { pluck(659, ctx.currentTime, 0.4, 0.08); pluck(988, ctx.currentTime + 0.06, 0.5, 0.06); } },
+    ending() { if (ctx) [440, 554, 659, 880].forEach((f, i) => pluck(f, ctx.currentTime + i * 0.18, 2.2, 0.12)); },
+    toggle() { on = !on; if (master) master.gain.value = on ? 0.25 : 0; return on; },
+  };
+})();
+
+/* ---------------- Input ---------------- */
+
+$('box').addEventListener('click', advance);
+$('bg').addEventListener('click', advance);
+$('chars').addEventListener('click', advance);
+document.addEventListener('keydown', (e) => {
+  if (!$('title').classList.contains('hidden')) { if (e.key === 'Enter') startGame(); return; }
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); advance(); }
+  if (/^[1-4]$/.test(e.key)) $('choices').children[Number(e.key) - 1]?.click();
+  if (e.key === 'l' || e.key === 'L') toggleLog();
+  if (e.key === 'Escape') $('log').classList.add('hidden');
+});
+$('btnNew').addEventListener('click', () => startGame());
+$('btnContinue').addEventListener('click', () => { const s = store.get('testigo.save', null); if (s && S[s.id]) startGame(s); });
+$('btnAgain').addEventListener('click', () => { $('ending').classList.add('hidden'); $('title').classList.remove('hidden'); $('stage').classList.add('menu'); refreshContinue(); });
+$('btnLog').addEventListener('click', (e) => { e.stopPropagation(); toggleLog(); });
+$('btnSound').addEventListener('click', (e) => { e.stopPropagation(); $('btnSound').textContent = `Sonido: ${sfx.toggle() ? 'sí' : 'no'}`; });
+$('log').addEventListener('click', () => $('log').classList.add('hidden'));
+
+function toggleLog() {
+  const log = $('log');
+  if (!st) return;
+  log.innerHTML = st.log.map((l) => `<p>${l}</p>`).join('') + '<p style="opacity:.6">(Haz clic para cerrar)</p>';
+  log.classList.toggle('hidden');
+  log.scrollTop = log.scrollHeight;
+}
+
+function refreshContinue() {
+  const s = store.get('testigo.save', null);
+  $('btnContinue').style.display = s && S[s.id] ? '' : 'none';
+}
+
+// Title screen backdrop.
+setBg('patio');
+shown = [['vera', 'left', 'smirk'], ['carmen', 'center', 'smile'], ['ines', 'right', 'blush']];
+renderChars(null);
+refreshContinue();
+
+// Exposed for automated checks.
+window.__testigo = { S, ENDINGS, go: (id) => go(id), state: () => st };
+</script>
+</body>
+</html>
