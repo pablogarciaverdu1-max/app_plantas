@@ -1,0 +1,58 @@
+:root {
+  --paper: #e6dfcc;
+  --night: #12161a;
+}
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--night);
+}
+#app, canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  color: var(--paper);
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+  background: radial-gradient(ellipse at center, rgba(18, 22, 26, 0.35), rgba(18, 22, 26, 0.85));
+  cursor: pointer;
+  user-select: none;
+}
+.overlay.hidden {
+  display: none;
+}
+.overlay h1 {
+  margin: 0;
+  font-family: 'Stardos Stencil', 'Courier New', monospace;
+  font-size: clamp(2.5rem, 7vw, 5rem);
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+.overlay .sub {
+  font-size: 1.1rem;
+  opacity: 0.85;
+}
+.overlay .cta {
+  margin-top: 2rem;
+  font-size: 1rem;
+  animation: pulse 2.4s ease-in-out infinite;
+}
+.overlay .note {
+  position: absolute;
+  bottom: 1.2rem;
+  font-size: 0.8rem;
+  opacity: 0.55;
+}
+@keyframes pulse {
+  50% { opacity: 0.45; }
+}
