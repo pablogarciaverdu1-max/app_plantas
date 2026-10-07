@@ -5,10 +5,10 @@ Cada fase termina cuando se cumplen todos sus criterios. Al final de cada fase h
 Marca aquí el progreso.
 
 ## Fase 0 — Proyecto
-- [ ] Proyecto con Vite, TypeScript, Three.js, Vitest y Playwright. Git iniciado.
-- [ ] Estructura de carpetas de la especificación técnica.
-- [ ] `npm run build` genera un único `dist/index.html` que abre con doble clic y muestra una escena 3D con suelo, cielo y niebla.
-- [ ] `npm run check` y `npm run e2e` pasan.
+- [x] Proyecto con Vite, TypeScript, Three.js, Vitest y Playwright. Git iniciado.
+- [x] Estructura de carpetas de la especificación técnica.
+- [x] `npm run build` genera un único `dist/index.html` que abre con doble clic y muestra una escena 3D con suelo, cielo y niebla.
+- [x] `npm run check` y `npm run e2e` pasan.
 
 **Terminado cuando:** el usuario abre `dist/index.html` con doble clic y ve la escena.
 
